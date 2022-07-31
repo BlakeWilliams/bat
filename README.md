@@ -6,7 +6,7 @@ much WIP, but contributions and issues are welcome.
 ## Usage
 
 
-Given a file, `index.bat`:
+Given a file, `index.batml`:
 
 ```
 <h1>Hello {{Team.Name}}</h1>
