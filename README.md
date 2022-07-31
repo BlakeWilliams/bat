@@ -5,7 +5,6 @@ much WIP, but contributions and issues are welcome.
 
 ## Usage
 
-
 Given a file, `index.batml`:
 
 ```

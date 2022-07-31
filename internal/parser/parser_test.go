@@ -68,6 +68,27 @@ func TestParseDots(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_If(t *testing.T) {
+	l := lexer.Lex("{{if name != nil}}Hello!{{else}}Goodbye!{{end}}")
+	result := Parse(l)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindIf, "", []*Node{
+				n(KindInfix, "", []*Node{
+					n(KindIdentifier, "name", nil),
+					n(KindOperator, "!=", nil),
+					n(KindNil, "", nil),
+				}),
+				n(KindText, "Hello!", nil),
+				n(KindText, "Goodbye!", nil),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

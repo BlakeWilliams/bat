@@ -66,3 +66,19 @@ func TestTemplateDotsNil(t *testing.T) {
 	require.ErrorContains(t, err, "attempted to access property `user` on nil value")
 	require.ErrorContains(t, err, "on line 1")
 }
+
+func TestTemplate_If(t *testing.T) {
+	template := NewTemplate("{{if name != nil}}Hello!{{else}}Goodbye!{{end}}")
+
+	b := new(bytes.Buffer)
+	err := template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello!", b.String())
+
+	b = new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Goodbye!", b.String())
+}

@@ -8,13 +8,6 @@ import (
 )
 
 type (
-	Token struct {
-		Kind      Kind
-		Value     string
-		StartLine int
-		EndLine   int
-	}
-
 	Lexer struct {
 		input     string
 		start     int
@@ -29,54 +22,12 @@ type (
 	stateFn func(*Lexer) stateFn
 )
 
-const (
-	KindError Kind = iota
-	// Represents raw text in a template
-	KindText
-	KindEOF
-	KindLeftDelim
-	KindRightDelim
-	KindIdentifier
-	KindDot
-	KindHash
-	KindSpace
-)
-
-func (k Kind) String() string {
-	switch k {
-	case KindError:
-		return "error"
-	case KindText:
-		return "text"
-	case KindEOF:
-		return "eof"
-	case KindLeftDelim:
-		return "openDelim"
-	case KindRightDelim:
-		return "closeDelim"
-	case KindIdentifier:
-		return "ident"
-	case KindDot:
-		return "dot"
-	case KindHash:
-		return "hash"
-	case KindSpace:
-		return "space"
-	default:
-		return fmt.Sprintf("uknown %d", k)
-	}
-}
-
 const eof = -1
 
 const (
 	leftDelim  = "{{"
 	rightDelim = "}}"
 )
-
-func (t Token) String() string {
-	return fmt.Sprintf("{%s `%s`}", t.Kind, t.Value)
-}
 
 func Lex(input string) *Lexer {
 	l := &Lexer{input: input, Tokens: make([]Token, 0), StartLine: 1, Line: 1}
@@ -89,6 +40,10 @@ func (l *Lexer) run() {
 	for state := lexText; state != nil; {
 		state = state(l)
 	}
+}
+
+func (l *Lexer) currentText() string {
+	return l.input[l.start:l.pos]
 }
 
 func (l *Lexer) emit(kind Kind) {
@@ -184,6 +139,14 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindHash)
 		return lexAction
+	case r == '=':
+		l.next()
+		l.emit(KindEqual)
+		return lexAction
+	case r == '!':
+		l.next()
+		l.emit(KindBang)
+		return lexAction
 	case unicode.IsSpace(r):
 		return lexSpace
 	case unicode.IsLetter(r):
@@ -218,7 +181,18 @@ func lexIdentifier(l *Lexer) stateFn {
 		}
 	}
 
-	l.emit(KindIdentifier)
+	switch l.currentText() {
+	case "if":
+		l.emit(KindIf)
+	case "else":
+		l.emit(KindElse)
+	case "nil":
+		l.emit(KindNil)
+	case "end":
+		l.emit(KindEnd)
+	default:
+		l.emit(KindIdentifier)
+	}
 
 	return lexAction
 }

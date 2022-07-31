@@ -55,6 +55,14 @@ func eval(n *parser.Node, out io.Writer, data map[string]any) {
 		value := access(n, data)
 
 		out.Write([]byte(valueToString(value)))
+	case parser.KindIf:
+		conditionResult := access(n.Children[0], data)
+
+		if conditionResult == true {
+			eval(n.Children[1], out, data)
+		} else if n.Children[2] != nil {
+			eval(n.Children[2], out, data)
+		}
 	default:
 		panic(fmt.Sprintf("unsupported kind %s", n.Kind))
 	}
@@ -62,8 +70,21 @@ func eval(n *parser.Node, out io.Writer, data map[string]any) {
 
 func access(n *parser.Node, data map[string]any) any {
 	switch n.Kind {
+	case parser.KindInfix:
+		left := access(n.Children[0], data)
+		right := access(n.Children[2], data)
+
+		if n.Children[1].Value == "!=" {
+			return left != right
+		} else if n.Children[1].Value == "==" {
+			return left == right
+		} else {
+			panic(fmt.Sprintf("Unsupported operator: %s" + n.Children[1].Value))
+		}
 	case parser.KindIdentifier:
 		return data[n.Value]
+	case parser.KindNil:
+		return nil
 	case parser.KindAccess:
 		root := access(n.Children[0], data)
 		propName := n.Children[1].Value

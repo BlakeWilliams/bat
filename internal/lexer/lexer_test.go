@@ -200,3 +200,40 @@ func TestLex_Pos(t *testing.T) {
 
 	require.Equal(t, l.Tokens[7].Kind, KindEOF)
 }
+
+func TestLex_If(t *testing.T) {
+	input := "{{if foo != nil}}1{{else}}2{{end}}"
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	fmt.Println(l)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[0].Value, "{{")
+
+	require.Equal(t, l.Tokens[1].Kind, KindIf)
+	require.Equal(t, l.Tokens[1].Value, "if")
+
+	require.Equal(t, l.Tokens[2].Kind, KindSpace)
+	require.Equal(t, l.Tokens[3].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[4].Kind, KindSpace)
+
+	require.Equal(t, l.Tokens[5].Kind, KindBang)
+	require.Equal(t, l.Tokens[5].Value, "!")
+
+	require.Equal(t, l.Tokens[6].Kind, KindEqual)
+	require.Equal(t, l.Tokens[6].Value, "=")
+
+	require.Equal(t, l.Tokens[7].Kind, KindSpace)
+	require.Equal(t, l.Tokens[8].Kind, KindNil)
+
+	require.Equal(t, l.Tokens[9].Kind, KindRightDelim)
+	require.Equal(t, l.Tokens[10].Kind, KindText)
+	require.Equal(t, l.Tokens[11].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[12].Kind, KindElse)
+	require.Equal(t, l.Tokens[13].Kind, KindRightDelim)
+	require.Equal(t, l.Tokens[14].Kind, KindText)
+	require.Equal(t, l.Tokens[15].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[16].Kind, KindEnd)
+	require.Equal(t, l.Tokens[17].Kind, KindRightDelim)
+}
