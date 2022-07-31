@@ -35,6 +35,10 @@ const (
 	KindNil        = "nil"
 	KindTrue       = "true"
 	KindFalse      = "false"
+	KindRange      = "range"
+	KindVariable   = "variable"
+	// Represents blocks of top-level items for use in if/else, range body, etc.
+	KindBlock = "block"
 )
 
 func (n *Node) String() string {
@@ -156,7 +160,7 @@ func parseStatement(p *parser) []*Node {
 			return nodes
 		case lexer.KindEOF:
 			panic("unexpected EOF")
-		case lexer.KindIdentifier:
+		case lexer.KindIdentifier, lexer.KindVariable:
 			node := parseExpression(p)
 			nodes = append(nodes, node)
 		case lexer.KindNil:
@@ -167,6 +171,9 @@ func parseStatement(p *parser) []*Node {
 			p.skipWhitespace()
 		case lexer.KindIf:
 			node := parseIf(p)
+			nodes = append(nodes, node)
+		case lexer.KindRange:
+			node := parseRange(p)
 			nodes = append(nodes, node)
 		default:
 			panic(fmt.Sprintf("unexpected token %v", p.peek().Value))
@@ -203,16 +210,69 @@ func parseExpression(p *parser) *Node {
 }
 
 func parseLiteralOrAccess(p *parser) *Node {
-	identifierToken := p.next()
-
 	kind := KindIdentifier
-	switch identifierToken.Kind {
+	switch p.peek().Kind {
 	case lexer.KindNil:
 		kind = KindNil
 	case lexer.KindTrue:
 		kind = KindTrue
 	case lexer.KindFalse:
 		kind = KindFalse
+	case lexer.KindVariable, lexer.KindIdentifier:
+		return parseVariableChain(p)
+	}
+
+	identifierToken := p.next()
+
+	identifierNode := &Node{
+		Kind:      kind,
+		Value:     identifierToken.Value,
+		StartLine: identifierToken.StartLine,
+		EndLine:   identifierToken.EndLine,
+	}
+
+	if p.peek().Kind == lexer.KindDot {
+		node := identifierNode
+
+		for p.peek().Kind == lexer.KindDot {
+			p.expect(lexer.KindDot)
+
+			identifier := p.expect(lexer.KindIdentifier)
+			identifierNode := &Node{
+				Kind:      KindIdentifier,
+				Value:     identifier.Value,
+				StartLine: identifier.StartLine,
+				EndLine:   identifier.EndLine,
+			}
+
+			newNode := &Node{
+				Kind:      KindAccess,
+				Children:  []*Node{node, identifierNode},
+				StartLine: identifier.StartLine,
+				EndLine:   identifier.EndLine,
+			}
+			node = newNode
+		}
+
+		return node
+	}
+
+	p.skipWhitespace()
+
+	return identifierNode
+}
+
+func parseVariableChain(p *parser) *Node {
+	identifierToken := p.next()
+
+	kind := KindIdentifier
+	switch identifierToken.Kind {
+	case lexer.KindVariable:
+		kind = KindVariable
+	case lexer.KindIdentifier:
+		kind = KindIdentifier
+	default:
+		panic(fmt.Sprintf("unexpected token %s, expected variable or identifier", identifierToken.Value))
 	}
 
 	identifierNode := &Node{
@@ -308,6 +368,64 @@ func parseOperator(p *parser) *Node {
 	token = p.expect(lexer.KindEqual)
 	node.Value += "="
 	node.EndLine = token.EndLine
+
+	return node
+}
+
+func parseRange(p *parser) *Node {
+	rangeToken := p.expect(lexer.KindRange)
+	node := &Node{
+		Kind:      KindRange,
+		StartLine: rangeToken.StartLine,
+		Children:  make([]*Node, 0, 3),
+	}
+
+	p.skipWhitespace()
+	var1Token := p.expect(lexer.KindVariable)
+	var1 := &Node{
+		Kind:      KindVariable,
+		StartLine: rangeToken.StartLine,
+		EndLine:   rangeToken.EndLine,
+		Value:     var1Token.Value,
+	}
+	node.Children = append(node.Children, var1)
+	p.skipWhitespace()
+
+	if p.peek().Kind == lexer.KindComma {
+		p.next()
+		p.skipWhitespace()
+		var2Token := p.expect(lexer.KindVariable)
+		var2 := &Node{
+			Kind:      KindVariable,
+			StartLine: var2Token.StartLine,
+			EndLine:   var2Token.EndLine,
+			Value:     var2Token.Value,
+		}
+		node.Children = append(node.Children, var2)
+	}
+	p.skipWhitespace()
+	p.expect(lexer.KindIn)
+	p.skipWhitespace()
+
+	node.Children = append(node.Children, parseVariableChain(p))
+	p.expect(lexer.KindRightDelim)
+	node.Children = append(node.Children, parseBlock(p))
+	p.skipWhitespace()
+	p.expect(lexer.KindEnd)
+
+	return node
+}
+
+func parseBlock(p *parser) *Node {
+	startToken := p.peek()
+	node := &Node{
+		Kind:      KindBlock,
+		StartLine: startToken.StartLine,
+		EndLine:   startToken.EndLine, // TODO fix
+		Children:  make([]*Node, 0),
+	}
+
+	node.Children = append(node.Children, parseMany(p)...)
 
 	return node
 }

@@ -255,3 +255,26 @@ func TestLex_False(t *testing.T) {
 	require.Equal(t, l.Tokens[1].Kind, KindFalse)
 	require.Equal(t, l.Tokens[2].Kind, KindRightDelim)
 }
+
+func TestLex_Range(t *testing.T) {
+	input := "{{range $i, $bar in foo}}{{end}}"
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 16)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindRange)
+	require.Equal(t, l.Tokens[2].Kind, KindSpace)
+
+	require.Equal(t, l.Tokens[3].Kind, KindVariable)
+	require.Equal(t, l.Tokens[3].Value, "$i")
+	require.Equal(t, l.Tokens[4].Kind, KindComma)
+	require.Equal(t, l.Tokens[5].Kind, KindSpace)
+	require.Equal(t, l.Tokens[6].Kind, KindVariable)
+	require.Equal(t, l.Tokens[6].Value, "$bar")
+	require.Equal(t, l.Tokens[7].Kind, KindSpace)
+	require.Equal(t, l.Tokens[8].Kind, KindIn)
+	require.Equal(t, l.Tokens[9].Kind, KindSpace)
+	require.Equal(t, l.Tokens[10].Kind, KindIdentifier)
+}

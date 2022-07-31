@@ -46,9 +46,48 @@ Bat supports `if` statements, and the `!=` and `==` operators.
 {{end}}
 ```
 
+### Iterators
+
+Iteration is supported via the `range` keyword. Both slices and maps are supported.
+
+```html
+{{range $index, $name in data}}
+    <h1>Hello {{$name}}, number {{$index}}</h1>
+{{end}}
+```
+
+Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resulting output would look like:
+
+```html
+    <h1>Hello Fox Mulder, number 0</h1>
+
+    <h1>Hello Dana Scully, number 1</h1>
+```
+
+In the example above, range defines two variables which __must__ begin with a $
+so they don't conflict with `data` passed into the template.
+
+The `range` keyword can also be used with a single variable, providing only the
+key or index to the iterator:
+
+```html
+{{range $index in data}}
+    <h1>Hello person {{$index}}</h1>
+{{end}}
+```
+
+Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resulting output would look like:
+
+```html
+    <h1>Hello person 0</h1>
+
+    <h1>Hello person 1</h1>
+```
+
+
 ## TODO
 
-- [ ] Add `each` functionality
+- [x] Add `each` functionality (see the section on `range`)
 - [x] Add `if` and `else` functionality
 - [ ] Emit better error messages and validate them with tests
 - [ ] Create an engine struct that will enable partials, helper functions, and
@@ -58,6 +97,7 @@ Bat supports `if` statements, and the `!=` and `==` operators.
 - [ ] Add basic math operations
 - [ ] Simple map class `{ "foo": bar }` for use with partials
 - [ ] Improve stringify logic in the executor (bat.go)
+- [ ] Support channels in `range`
 
 ## Maybe
 

@@ -147,6 +147,13 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindBang)
 		return lexAction
+	case r == ',':
+		l.next()
+		l.emit(KindComma)
+		return lexAction
+	case r == '$':
+		l.next()
+		return lexVariable
 	case unicode.IsSpace(r):
 		return lexSpace
 	case unicode.IsLetter(r):
@@ -165,6 +172,25 @@ func lexRightDelim(l *Lexer) stateFn {
 	l.emit(KindRightDelim)
 
 	return lexText
+}
+
+func lexVariable(l *Lexer) stateFn {
+	for {
+		r := l.next()
+
+		if r == eof {
+			break
+		}
+
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			l.backup()
+			break
+		}
+	}
+
+	l.emit(KindVariable)
+
+	return lexAction
 }
 
 func lexIdentifier(l *Lexer) stateFn {
@@ -194,6 +220,10 @@ func lexIdentifier(l *Lexer) stateFn {
 		l.emit(KindTrue)
 	case "false":
 		l.emit(KindFalse)
+	case "in":
+		l.emit(KindIn)
+	case "range":
+		l.emit(KindRange)
 	default:
 		l.emit(KindIdentifier)
 	}
