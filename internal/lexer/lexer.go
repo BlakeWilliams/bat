@@ -42,12 +42,41 @@ const (
 	KindSpace
 )
 
+func (k Kind) String() string {
+	switch k {
+	case KindError:
+		return "error"
+	case KindText:
+		return "text"
+	case KindEOF:
+		return "eof"
+	case KindLeftDelim:
+		return "openDelim"
+	case KindRightDelim:
+		return "closeDelim"
+	case KindIdentifier:
+		return "ident"
+	case KindDot:
+		return "dot"
+	case KindHash:
+		return "hash"
+	case KindSpace:
+		return "space"
+	default:
+		return fmt.Sprintf("uknown %d", k)
+	}
+}
+
 const eof = -1
 
 const (
 	leftDelim  = "{{"
 	rightDelim = "}}"
 )
+
+func (t Token) String() string {
+	return fmt.Sprintf("{%s `%s`}", t.Kind, t.Value)
+}
 
 func Lex(input string) *Lexer {
 	l := &Lexer{input: input, Tokens: make([]Token, 0), StartLine: 1, Line: 1}
@@ -114,11 +143,10 @@ func (l *Lexer) peek() rune {
 
 func lexText(l *Lexer) stateFn {
 	if index := strings.Index(l.input[l.start:], leftDelim); index >= 0 {
-
 		if index > 0 {
-			l.Line += strings.Count(l.input[l.start:l.start+index], "\n")
-
 			l.pos = l.start + index
+
+			l.Line += strings.Count(l.input[l.start:l.pos], "\n")
 			l.emit(KindText)
 		}
 
