@@ -25,6 +25,15 @@ bat.Execute(map[string]any{"Team": team})
 
 Here's an overview of more advanced usage:
 
+### Primitives:
+
+Bat supports the following primitives that can be used within `{{}}`
+expressions:
+
+- `true`
+- `false`
+- `nil`
+
 ### Conditionals
 
 Bat supports `if` statements, and the `!=` and `==` operators.
@@ -45,9 +54,10 @@ Bat supports `if` statements, and the `!=` and `==` operators.
 - [ ] Create an engine struct that will enable partials, helper functions, and
       custom escaping functions.
 - [ ] Support strings in templates
-- [ ] Support numbers
+- [ ] Support integer numbers
 - [ ] Add basic math operations
 - [ ] Simple map class `{ "foo": bar }` for use with partials
+- [ ] Improve stringify logic in the executor (bat.go)
 
 ## Maybe
 
