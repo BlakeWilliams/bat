@@ -7,19 +7,27 @@ import (
 	"unicode/utf8"
 )
 
-type Token struct {
-	Kind  Kind
-	Value string
-}
+type (
+	Token struct {
+		Kind      Kind
+		Value     string
+		StartLine int
+		EndLine   int
+	}
 
-type Lexer struct {
-	input  string
-	start  int
-	pos    int
-	Tokens []Token
-}
+	Lexer struct {
+		input     string
+		start     int
+		pos       int
+		Tokens    []Token
+		Line      int
+		StartLine int
+	}
 
-type Kind int
+	Kind int
+
+	stateFn func(*Lexer) stateFn
+)
 
 const (
 	KindError Kind = iota
@@ -34,8 +42,6 @@ const (
 	KindSpace
 )
 
-type stateFn func(*Lexer) stateFn
-
 const eof = -1
 
 const (
@@ -44,7 +50,7 @@ const (
 )
 
 func Lex(input string) *Lexer {
-	l := &Lexer{input: input, Tokens: make([]Token, 0)}
+	l := &Lexer{input: input, Tokens: make([]Token, 0), StartLine: 1, Line: 1}
 	l.run()
 
 	return l
@@ -57,7 +63,15 @@ func (l *Lexer) run() {
 }
 
 func (l *Lexer) emit(kind Kind) {
-	l.Tokens = append(l.Tokens, Token{Kind: kind, Value: l.input[l.start:l.pos]})
+	token := Token{
+		Kind:      kind,
+		Value:     l.input[l.start:l.pos],
+		StartLine: l.StartLine,
+		EndLine:   l.Line,
+	}
+
+	l.StartLine = l.Line
+	l.Tokens = append(l.Tokens, token)
 	l.start = l.pos
 	l.pos = l.start
 }
@@ -74,25 +88,36 @@ func (l *Lexer) next() rune {
 	r, width := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.pos += width
 
+	if r == '\n' {
+		l.Line++
+	}
+
 	return r
 }
 
 func (l *Lexer) backup() {
-	_, width := utf8.DecodeLastRuneInString(l.input[:l.pos])
+	r, width := utf8.DecodeLastRuneInString(l.input[:l.pos])
+
+	if r == '\n' {
+		l.Line -= 1
+	}
+
 	l.pos -= width
 }
 
 func (l *Lexer) peek() rune {
-	pos := l.pos
 	r := l.next()
-	l.pos = pos
+	l.backup()
 
 	return r
 }
 
 func lexText(l *Lexer) stateFn {
 	if index := strings.Index(l.input[l.start:], leftDelim); index >= 0 {
+
 		if index > 0 {
+			l.Line += strings.Count(l.input[l.start:l.start+index], "\n")
+
 			l.pos = l.start + index
 			l.emit(KindText)
 		}

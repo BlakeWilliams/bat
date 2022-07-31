@@ -165,3 +165,38 @@ func TestLexSpaces(t *testing.T) {
 
 	require.Equal(t, l.Tokens[6].Kind, KindEOF)
 }
+
+func TestLex_Pos(t *testing.T) {
+	input := "<h1>\nHello\n{{\nname\n}}</h1>"
+	l := Lex(input)
+
+	l.run()
+
+	require.Equal(t, l.Tokens[0].Kind, KindText)
+	require.Equal(t, l.Tokens[0].Value, "<h1>\nHello\n")
+	require.Equal(t, l.Tokens[0].StartLine, 1)
+	require.Equal(t, l.Tokens[0].EndLine, 3)
+
+	require.Equal(t, l.Tokens[1].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Value, "{{")
+	require.Equal(t, l.Tokens[1].StartLine, 3)
+	require.Equal(t, l.Tokens[1].EndLine, 3)
+
+	fmt.Println(input)
+	require.Equal(t, l.Tokens[3].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[3].Value, "name")
+	require.Equal(t, l.Tokens[3].StartLine, 4)
+	require.Equal(t, l.Tokens[3].EndLine, 4)
+
+	require.Equal(t, l.Tokens[5].Kind, KindRightDelim)
+	require.Equal(t, l.Tokens[5].Value, "}}")
+	require.Equal(t, l.Tokens[5].StartLine, 5)
+	require.Equal(t, l.Tokens[5].EndLine, 5)
+
+	require.Equal(t, l.Tokens[6].Kind, KindText)
+	require.Equal(t, l.Tokens[6].Value, "</h1>")
+	require.Equal(t, l.Tokens[6].StartLine, 5)
+	require.Equal(t, l.Tokens[6].EndLine, 5)
+
+	require.Equal(t, l.Tokens[7].Kind, KindEOF)
+}
