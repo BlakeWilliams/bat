@@ -105,6 +105,7 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
 - Replace `{{end}}` with named end blocks, like `{{/if}}`
 - Add support for `{{else if <expression>}}`
 - Support the not operator, e.g. `if !foo`
+- Track and error on undefined variable usage in the parsing stage
 
 ## Don't
 
