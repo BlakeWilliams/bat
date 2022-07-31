@@ -1,6 +1,7 @@
 package stache
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -21,7 +22,18 @@ func New(input string) Template {
 	return Template{ast: ast}
 }
 
-func (t *Template) Execute(out io.Writer, data map[string]any) error {
+func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch val := r.(type) {
+			case string:
+				err = errors.New(val)
+			case error:
+				err = val
+			}
+		}
+	}()
+
 	for _, child := range t.ast.Children {
 		eval(child, out, data)
 	}
@@ -44,7 +56,7 @@ func eval(n *parser.Node, out io.Writer, data map[string]any) {
 
 		out.Write([]byte(valueToString(value)))
 	default:
-		panic("unsupported")
+		panic(fmt.Sprintf("unsupported kind %s", n.Kind))
 	}
 }
 
@@ -73,10 +85,10 @@ func access(n *parser.Node, data map[string]any) any {
 			return value.Interface()
 		default:
 			panic(fmt.Sprintf("unsupported dot access on type %s", k))
+			// panic(fmt.Sprintf("unsupported dot access on type %s on line %d column %d", k, n.Line, n.Column))
 		}
-
 	default:
-		panic("omg")
+		panic(fmt.Sprintf("unsupported access called on type %s", n.Kind))
 	}
 }
 

@@ -91,8 +91,6 @@ func parseMany(p *parser) []*Node {
 		switch p.peek().Kind {
 		case lexer.KindEOF:
 			return nodes
-		case lexer.KindRightDelim:
-			return nodes
 		case lexer.KindText:
 			node := &Node{Kind: KindText, Value: p.next().Value}
 			nodes = append(nodes, node)
@@ -103,7 +101,7 @@ func parseMany(p *parser) []*Node {
 			node.Children = parseStatement(p)
 			nodes = append(nodes, node)
 		default:
-			panic("no idea wtf that is dude")
+			panic(fmt.Sprintf("unsupported token %v", p.peek()))
 		}
 	}
 }
@@ -157,7 +155,7 @@ func (p *parser) expect(kind lexer.Kind) lexer.Token {
 	n := p.next()
 
 	if n.Kind != kind {
-		panic(fmt.Sprintf("unexpected token %v, expected %d", n, kind))
+		panic(fmt.Sprintf("unexpected token %v, expected %s", n, kind))
 	}
 
 	return n

@@ -56,3 +56,12 @@ func TestTemplateDots_Map(t *testing.T) {
 
 	require.Equal(t, "<h1>Hello Fox Mulder</h1>", b.String())
 }
+
+func TestTemplateDotsNil(t *testing.T) {
+	template := New("<h1>Hello {{details.user.name}}</h1>")
+
+	b := new(bytes.Buffer)
+	err := template.Execute(b, map[string]any{})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "property accessed on nil value")
+}
