@@ -1,4 +1,4 @@
-package stache
+package lexer
 
 import (
 	"fmt"
@@ -7,33 +7,34 @@ import (
 	"unicode/utf8"
 )
 
-type lexToken struct {
-	kind  lexKind
-	value string
+type Token struct {
+	Kind  Kind
+	Value string
 }
 
-type lexer struct {
+type Lexer struct {
 	input  string
 	start  int
 	pos    int
-	tokens []lexToken
+	Tokens []Token
 }
 
-type lexKind int
+type Kind int
 
 const (
-	lexKindError lexKind = iota
+	KindError Kind = iota
 	// Represents raw text in a template
-	lexKindText
-	lexKindEOF
-	lexKindLeftDelim
-	lexKindRightDelim
-	lexKindIdentifier
-	lexKindDot
-	lexKindHash
+	KindText
+	KindEOF
+	KindLeftDelim
+	KindRightDelim
+	KindIdentifier
+	KindDot
+	KindHash
+	KindSpace
 )
 
-type stateFn func(*lexer) stateFn
+type stateFn func(*Lexer) stateFn
 
 const eof = -1
 
@@ -42,23 +43,30 @@ const (
 	rightDelim = "}}"
 )
 
-func (l *lexer) run() {
+func Lex(input string) *Lexer {
+	l := &Lexer{input: input, Tokens: make([]Token, 0)}
+	l.run()
+
+	return l
+}
+
+func (l *Lexer) run() {
 	for state := lexText; state != nil; {
 		state = state(l)
 	}
 }
 
-func (l *lexer) emit(kind lexKind) {
-	l.tokens = append(l.tokens, lexToken{kind: kind, value: l.input[l.start:l.pos]})
+func (l *Lexer) emit(kind Kind) {
+	l.Tokens = append(l.Tokens, Token{Kind: kind, Value: l.input[l.start:l.pos]})
 	l.start = l.pos
 	l.pos = l.start
 }
 
-func (l *lexer) emitError(content string) {
-	l.tokens = append(l.tokens, lexToken{kind: lexKindError, value: content})
+func (l *Lexer) emitError(content string) {
+	l.Tokens = append(l.Tokens, Token{Kind: KindError, Value: content})
 }
 
-func (l *lexer) next() rune {
+func (l *Lexer) next() rune {
 	if l.pos >= len(l.input) {
 		return eof
 	}
@@ -69,12 +77,12 @@ func (l *lexer) next() rune {
 	return r
 }
 
-func (l *lexer) backup() {
+func (l *Lexer) backup() {
 	_, width := utf8.DecodeLastRuneInString(l.input[:l.pos])
 	l.pos -= width
 }
 
-func (l *lexer) peek() rune {
+func (l *Lexer) peek() rune {
 	pos := l.pos
 	r := l.next()
 	l.pos = pos
@@ -82,11 +90,11 @@ func (l *lexer) peek() rune {
 	return r
 }
 
-func lexText(l *lexer) stateFn {
+func lexText(l *Lexer) stateFn {
 	if index := strings.Index(l.input[l.start:], leftDelim); index >= 0 {
 		if index > 0 {
-			l.pos = index
-			l.emit(lexKindText)
+			l.pos = l.start + index
+			l.emit(KindText)
 		}
 
 		return lexLeftDelim
@@ -95,53 +103,55 @@ func lexText(l *lexer) stateFn {
 	// If there's remaining text, emit it
 	if l.start != len(l.input) {
 		l.pos = len(l.input)
-		l.emit(lexKindText)
+		l.emit(KindText)
 	}
 
-	l.emit(lexKindEOF)
+	l.emit(KindEOF)
 
 	return nil
 }
 
-func lexLeftDelim(l *lexer) stateFn {
+func lexLeftDelim(l *Lexer) stateFn {
 	l.pos += len(leftDelim)
-	l.emit(lexKindLeftDelim)
+	l.emit(KindLeftDelim)
 
 	return lexAction
 }
 
-func lexAction(l *lexer) stateFn {
+func lexAction(l *Lexer) stateFn {
 	r := l.peek()
 	switch {
 	case r == '}':
 		return lexRightDelim
 	case r == '.':
 		l.next()
-		l.emit(lexKindDot)
+		l.emit(KindDot)
 		return lexAction
 	case r == '#':
 		l.next()
-		l.emit(lexKindHash)
+		l.emit(KindHash)
 		return lexAction
+	case unicode.IsSpace(r):
+		return lexSpace
 	case unicode.IsLetter(r):
 		return lexIdentifier
 	}
 	return nil
 }
 
-func lexRightDelim(l *lexer) stateFn {
+func lexRightDelim(l *Lexer) stateFn {
 	if !strings.HasPrefix(l.input[l.pos:], rightDelim) {
 		l.emitError(fmt.Sprintf("expected }}, got %s", l.input[l.pos:l.pos+2]))
 		return nil
 	}
 
 	l.pos += len(rightDelim)
-	l.emit(lexKindRightDelim)
+	l.emit(KindRightDelim)
 
 	return lexText
 }
 
-func lexIdentifier(l *lexer) stateFn {
+func lexIdentifier(l *Lexer) stateFn {
 	for {
 		r := l.next()
 
@@ -155,7 +165,26 @@ func lexIdentifier(l *lexer) stateFn {
 		}
 	}
 
-	l.emit(lexKindIdentifier)
+	l.emit(KindIdentifier)
+
+	return lexAction
+}
+
+func lexSpace(l *Lexer) stateFn {
+	for {
+		r := l.next()
+
+		if r == eof {
+			break
+		}
+
+		if !unicode.IsSpace(r) {
+			l.backup()
+			break
+		}
+	}
+
+	l.emit(KindSpace)
 
 	return lexAction
 }
