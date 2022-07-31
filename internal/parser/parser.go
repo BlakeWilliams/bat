@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blakewilliams/stache/internal/lexer"
+	"github.com/blakewilliams/bat/internal/lexer"
 )
 
 // Represents a node in the template AST (abstract syntax tree).
 type Node struct {
-	Kind     string
-	Children []*Node
-	Value    string
+	Kind      string
+	Children  []*Node
+	Value     string
+	StartLine int
+	EndLine   int
 }
 
 type parser struct {
@@ -92,11 +94,12 @@ func parseMany(p *parser) []*Node {
 		case lexer.KindEOF:
 			return nodes
 		case lexer.KindText:
-			node := &Node{Kind: KindText, Value: p.next().Value}
+			token := p.next()
+			node := &Node{Kind: KindText, Value: token.Value, StartLine: token.StartLine, EndLine: token.EndLine}
 			nodes = append(nodes, node)
 		case lexer.KindLeftDelim:
-			node := &Node{Kind: KindStatement}
-			p.next()
+			token := p.next()
+			node := &Node{Kind: KindStatement, StartLine: token.StartLine, EndLine: token.EndLine}
 
 			node.Children = parseStatement(p)
 			nodes = append(nodes, node)
@@ -130,7 +133,12 @@ func parseStatement(p *parser) []*Node {
 
 func parseExpression(p *parser) *Node {
 	identifierToken := p.next()
-	identifierNode := &Node{Kind: KindIdentifier, Value: identifierToken.Value}
+	identifierNode := &Node{
+		Kind:      KindIdentifier,
+		Value:     identifierToken.Value,
+		StartLine: identifierToken.StartLine,
+		EndLine:   identifierToken.EndLine,
+	}
 
 	if p.peek().Kind == lexer.KindDot {
 		node := identifierNode
@@ -139,9 +147,19 @@ func parseExpression(p *parser) *Node {
 			p.expect(lexer.KindDot)
 
 			identifier := p.expect(lexer.KindIdentifier)
-			identifierNode := &Node{Kind: KindIdentifier, Value: identifier.Value}
+			identifierNode := &Node{
+				Kind:      KindIdentifier,
+				Value:     identifier.Value,
+				StartLine: identifier.StartLine,
+				EndLine:   identifier.EndLine,
+			}
 
-			newNode := &Node{Kind: KindAccess, Children: []*Node{node, identifierNode}}
+			newNode := &Node{
+				Kind:      KindAccess,
+				Children:  []*Node{node, identifierNode},
+				StartLine: identifier.StartLine,
+				EndLine:   identifier.EndLine,
+			}
 			node = newNode
 		}
 

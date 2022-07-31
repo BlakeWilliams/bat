@@ -1,4 +1,4 @@
-package stache
+package bat
 
 import (
 	"errors"
@@ -6,8 +6,8 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/blakewilliams/stache/internal/lexer"
-	"github.com/blakewilliams/stache/internal/parser"
+	"github.com/blakewilliams/bat/internal/lexer"
+	"github.com/blakewilliams/bat/internal/parser"
 )
 
 type Template struct {
@@ -15,7 +15,7 @@ type Template struct {
 	ast  *parser.Node
 }
 
-func New(input string) Template {
+func NewTemplate(input string) Template {
 	l := lexer.Lex(input)
 	ast := parser.Parse(l)
 
@@ -68,6 +68,10 @@ func access(n *parser.Node, data map[string]any) any {
 		root := access(n.Children[0], data)
 		propName := n.Children[1].Value
 
+		if root == nil {
+			panic(fmt.Sprintf("attempted to access property `%s` on nil value on line %d", propName, n.StartLine))
+		}
+
 		v := reflect.ValueOf(root)
 
 		k := v.Kind()
@@ -84,14 +88,15 @@ func access(n *parser.Node, data map[string]any) any {
 			value := v.MapIndex(reflect.ValueOf(propName))
 			return value.Interface()
 		default:
-			panic(fmt.Sprintf("unsupported dot access on type %s", k))
-			// panic(fmt.Sprintf("unsupported dot access on type %s on line %d column %d", k, n.Line, n.Column))
+			panic(fmt.Sprintf("access on type %s on line %d", k, n.StartLine))
 		}
 	default:
 		panic(fmt.Sprintf("unsupported access called on type %s", n.Kind))
 	}
 }
 
+// TODO this needs to check for the stringer interface, and maybe handle values
+// a bit more gracefully...
 func valueToString(v any) string {
 	return fmt.Sprintf("%v", v)
 }

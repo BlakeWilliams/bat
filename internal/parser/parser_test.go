@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/blakewilliams/stache/internal/lexer"
+	"github.com/blakewilliams/bat/internal/lexer"
 	"github.com/stretchr/testify/require"
 )
 

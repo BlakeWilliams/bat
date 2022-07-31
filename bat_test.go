@@ -1,4 +1,4 @@
-package stache
+package bat
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestTemplate(t *testing.T) {
-	template := New("<h1>Hello {{name}}</h1>")
+	template := NewTemplate("<h1>Hello {{name}}</h1>")
 
 	b := new(bytes.Buffer)
 	err := template.Execute(b, map[string]any{"name": "Fox Mulder"})
@@ -31,7 +31,7 @@ func TestTemplateDots(t *testing.T) {
 		Name: name{First: "Fox", Last: "Mulder"},
 	}
 
-	template := New("<h1>Hello {{user.Name.First}} {{user.Name.Last}}</h1>")
+	template := NewTemplate("<h1>Hello {{user.Name.First}} {{user.Name.Last}}</h1>")
 
 	b := new(bytes.Buffer)
 	err := template.Execute(b, map[string]any{"user": user})
@@ -48,7 +48,7 @@ func TestTemplateDots_Map(t *testing.T) {
 		},
 	}
 
-	template := New("<h1>Hello {{details.user.name}}</h1>")
+	template := NewTemplate("<h1>Hello {{details.user.name}}</h1>")
 
 	b := new(bytes.Buffer)
 	err := template.Execute(b, map[string]any{"details": user})
@@ -58,10 +58,11 @@ func TestTemplateDots_Map(t *testing.T) {
 }
 
 func TestTemplateDotsNil(t *testing.T) {
-	template := New("<h1>Hello {{details.user.name}}</h1>")
+	template := NewTemplate("<h1>Hello {{details.user.name}}</h1>")
 
 	b := new(bytes.Buffer)
 	err := template.Execute(b, map[string]any{})
 	require.Error(t, err)
-	require.ErrorContains(t, err, "property accessed on nil value")
+	require.ErrorContains(t, err, "attempted to access property `user` on nil value")
+	require.ErrorContains(t, err, "on line 1")
 }

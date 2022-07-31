@@ -1,4 +1,4 @@
-module github.com/blakewilliams/stache
+module github.com/blakewilliams/bat
 
 go 1.18
 
