@@ -15,11 +15,15 @@ type Template struct {
 	ast  *parser.Node
 }
 
-func NewTemplate(input string) Template {
+func NewTemplate(input string) (Template, error) {
 	l := lexer.Lex(input)
-	ast := parser.Parse(l)
+	ast, err := parser.Parse(l)
 
-	return Template{ast: ast}
+	if err != nil {
+		return Template{}, fmt.Errorf("could not create template: %w", err)
+	}
+
+	return Template{ast: ast}, nil
 }
 
 func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
@@ -70,6 +74,12 @@ func eval(n *parser.Node, out io.Writer, data map[string]any) {
 
 func access(n *parser.Node, data map[string]any) any {
 	switch n.Kind {
+	case parser.KindTrue:
+		return true
+	case parser.KindFalse:
+		return false
+	case parser.KindNil:
+		return nil
 	case parser.KindInfix:
 		left := access(n.Children[0], data)
 		right := access(n.Children[2], data)
@@ -83,8 +93,6 @@ func access(n *parser.Node, data map[string]any) any {
 		}
 	case parser.KindIdentifier:
 		return data[n.Value]
-	case parser.KindNil:
-		return nil
 	case parser.KindAccess:
 		root := access(n.Children[0], data)
 		propName := n.Children[1].Value

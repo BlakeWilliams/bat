@@ -190,6 +190,10 @@ func lexIdentifier(l *Lexer) stateFn {
 		l.emit(KindNil)
 	case "end":
 		l.emit(KindEnd)
+	case "true":
+		l.emit(KindTrue)
+	case "false":
+		l.emit(KindFalse)
 	default:
 		l.emit(KindIdentifier)
 	}

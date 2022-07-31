@@ -23,9 +23,40 @@ t := team{
 bat.Execute(map[string]any{"Team": team})
 ```
 
+Here's an overview of more advanced usage:
+
+### Conditionals
+
+Bat supports `if` statements, and the `!=` and `==` operators.
+
+```html
+{{if user != nil}}
+    <a href="/login">Login</a>
+{{else}}
+    <a href="/profile">View your profile</a>
+{{end}}
+```
+
 ## TODO
 
 - [ ] Add `each` functionality
-- [ ] Add `if` and `else` functionality
+- [x] Add `if` and `else` functionality
 - [ ] Emit better error messages and validate them with tests
-- [ ] Create engines that will enable partials, helper functions, and custom escaping
+- [ ] Create an engine struct that will enable partials, helper functions, and
+      custom escaping functions.
+- [ ] Support strings in templates
+- [ ] Support numbers
+- [ ] Add basic math operations
+- [ ] Simple map class `{ "foo": bar }` for use with partials
+
+## Maybe
+
+- Add &&, and || operators for more complex conditionals
+- Replace `{{end}}` with named end blocks, like `{{/if}}`
+- Add support for `{{else if <expression>}}`
+- Support the not operator, e.g. `if !foo`
+
+## Don't
+
+- Add parens for complex options
+- Variable declarations that look like provided data access

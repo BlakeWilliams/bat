@@ -15,7 +15,8 @@ type testNode struct {
 
 func TestParse(t *testing.T) {
 	l := lexer.Lex("<h1>Hello world</h1>")
-	result := Parse(l)
+	result, err := Parse(l)
+	require.NoError(t, err)
 
 	require.Len(t, result.Children, 1)
 
@@ -27,7 +28,8 @@ func TestParse(t *testing.T) {
 
 func TestParseDelim(t *testing.T) {
 	l := lexer.Lex("<h1>Hello {{name}}</h1>")
-	result := Parse(l)
+	result, err := Parse(l)
+	require.NoError(t, err)
 
 	require.Len(t, result.Children, 3)
 
@@ -49,7 +51,8 @@ func TestParseDelim(t *testing.T) {
 
 func TestParseDots(t *testing.T) {
 	l := lexer.Lex("<h1>Hello {{  foo.bar.baz   }}</h1>")
-	result := Parse(l)
+	result, err := Parse(l)
+	require.NoError(t, err)
 
 	expected := n(KindRoot, "", []*Node{
 		n(KindText, "<h1>Hello ", nil),
@@ -70,7 +73,8 @@ func TestParseDots(t *testing.T) {
 
 func TestParse_If(t *testing.T) {
 	l := lexer.Lex("{{if name != nil}}Hello!{{else}}Goodbye!{{end}}")
-	result := Parse(l)
+	result, err := Parse(l)
+	require.NoError(t, err)
 
 	expected := n(KindRoot, "", []*Node{
 		n(KindStatement, "", []*Node{
@@ -78,7 +82,7 @@ func TestParse_If(t *testing.T) {
 				n(KindInfix, "", []*Node{
 					n(KindIdentifier, "name", nil),
 					n(KindOperator, "!=", nil),
-					n(KindNil, "", nil),
+					n(KindNil, "nil", nil),
 				}),
 				n(KindText, "Hello!", nil),
 				n(KindText, "Goodbye!", nil),
@@ -87,6 +91,13 @@ func TestParse_If(t *testing.T) {
 	})
 
 	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_BrokenNestedIf(t *testing.T) {
+	l := lexer.Lex("{{if name != nil != bar}}{{end}}")
+	_, err := Parse(l)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "unexpected token !")
 }
 
 func n(kind string, value string, children []*Node) *Node {

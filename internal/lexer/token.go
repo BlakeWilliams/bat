@@ -19,6 +19,8 @@ const (
 	KindNil
 	KindElse
 	KindEnd
+	KindTrue
+	KindFalse
 )
 
 type Token struct {
@@ -60,6 +62,10 @@ func (k Kind) String() string {
 		return "else"
 	case KindEnd:
 		return "end"
+	case KindTrue:
+		return "true"
+	case KindFalse:
+		return "false"
 	default:
 		return fmt.Sprintf("uknown %d", k)
 	}

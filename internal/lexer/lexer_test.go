@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -77,7 +76,6 @@ func TestLexMultipleStatements(t *testing.T) {
 	l := Lexer{input: input, Tokens: make([]Token, 0)}
 
 	l.run()
-	fmt.Println(l.Tokens)
 
 	require.Len(t, l.Tokens, 12)
 
@@ -182,7 +180,6 @@ func TestLex_Pos(t *testing.T) {
 	require.Equal(t, l.Tokens[1].StartLine, 3)
 	require.Equal(t, l.Tokens[1].EndLine, 3)
 
-	fmt.Println(input)
 	require.Equal(t, l.Tokens[3].Kind, KindIdentifier)
 	require.Equal(t, l.Tokens[3].Value, "name")
 	require.Equal(t, l.Tokens[3].StartLine, 4)
@@ -206,7 +203,6 @@ func TestLex_If(t *testing.T) {
 	l := Lexer{input: input, Tokens: make([]Token, 0)}
 
 	l.run()
-	fmt.Println(l)
 
 	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
 	require.Equal(t, l.Tokens[0].Value, "{{")
@@ -236,4 +232,26 @@ func TestLex_If(t *testing.T) {
 	require.Equal(t, l.Tokens[15].Kind, KindLeftDelim)
 	require.Equal(t, l.Tokens[16].Kind, KindEnd)
 	require.Equal(t, l.Tokens[17].Kind, KindRightDelim)
+}
+
+func TestLex_True(t *testing.T) {
+	input := "{{true}}"
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindTrue)
+	require.Equal(t, l.Tokens[2].Kind, KindRightDelim)
+}
+
+func TestLex_False(t *testing.T) {
+	input := "{{false}}"
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindFalse)
+	require.Equal(t, l.Tokens[2].Kind, KindRightDelim)
 }
