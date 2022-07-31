@@ -134,7 +134,7 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 		} else if n.Children[1].Value == "==" {
 			return left == right
 		} else {
-			panic(fmt.Sprintf("Unsupported operator: %s" + n.Children[1].Value))
+			panic(fmt.Sprintf("Unsupported operator: %s on line %d", n.Children[1].Value, n.Children[1].StartLine))
 		}
 	case parser.KindIdentifier:
 		return data[n.Value]
