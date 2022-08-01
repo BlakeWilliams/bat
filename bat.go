@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/blakewilliams/bat/internal/lexer"
+	"github.com/blakewilliams/bat/internal/mapsort"
 	"github.com/blakewilliams/bat/internal/parser"
 )
 
@@ -102,16 +103,17 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 				eval(body, out, data, newVars)
 			}
 		case reflect.Map:
-			for _, key := range v.MapKeys() {
-				newVars[iteratorName] = key.Interface()
-				newVars[valueName] = v.MapIndex(key).Interface()
+			sorted := mapsort.Sort(v)
+
+			for i := range sorted.Keys {
+				newVars[iteratorName] = sorted.Keys[i].Interface()
+				newVars[valueName] = sorted.Values[i].Interface()
 
 				eval(body, out, data, newVars)
 			}
 		default:
 			panic(fmt.Sprintf("attempted to range over %s", v.Kind()))
 		}
-		// TODO validate we can loop
 	default:
 		panic(fmt.Sprintf("unsupported kind %s", n.Kind))
 	}

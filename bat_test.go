@@ -171,9 +171,9 @@ func TestTemplateRange_Map(t *testing.T) {
 
 	expected := `
 	
-		<h1>Hello, Fox Mulder</h1>
-	
 		<h1>Hello, Dana Scully</h1>
+	
+		<h1>Hello, Fox Mulder</h1>
 	
 	`
 	require.Equal(t, expected, b.String())
@@ -199,11 +199,11 @@ func TestTemplateRange_NestedStringConditional(t *testing.T) {
 	expected := `
 
 	
-		Agent Fox Mulder
+		Dr. Dana Scully
 	
 
 	
-		Dr. Dana Scully
+		Agent Fox Mulder
 	
 
 	`

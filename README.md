@@ -33,6 +33,7 @@ expressions:
 - `true`
 - `false`
 - `nil`
+- `"string"`
 
 ### Conditionals
 
@@ -83,6 +84,8 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
 
     <h1>Hello person 1</h1>
 ```
+
+If a map is passed to `range`, it will attempt to sort it before iteration if the key is able to be compared and is implemented in the `internal/mapsort` package.
 
 
 ## TODO
