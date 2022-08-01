@@ -84,8 +84,8 @@ func TestParse_If(t *testing.T) {
 					n(KindOperator, "!=", nil),
 					n(KindNil, "nil", nil),
 				}),
-				n(KindText, "Hello!", nil),
-				n(KindText, "Goodbye!", nil),
+				n(KindBlock, "", []*Node{n(KindText, "Hello!", nil)}),
+				n(KindBlock, "", []*Node{n(KindText, "Goodbye!", nil)}),
 			}),
 		}),
 	})
@@ -119,6 +119,27 @@ func TestParse_BrokenNestedIf(t *testing.T) {
 	_, err := Parse(l)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "unexpected token !")
+}
+
+func TestParse_String(t *testing.T) {
+	l := lexer.Lex(`{{if name != "Fox"}}{{end}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindIf, "", []*Node{
+				n(KindInfix, "", []*Node{
+					n(KindIdentifier, "name", nil),
+					n(KindOperator, "!=", nil),
+					n(KindString, "\"Fox\"", nil),
+				}),
+				n(KindBlock, "", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
 }
 
 func n(kind string, value string, children []*Node) *Node {

@@ -278,3 +278,27 @@ func TestLex_Range(t *testing.T) {
 	require.Equal(t, l.Tokens[9].Kind, KindSpace)
 	require.Equal(t, l.Tokens[10].Kind, KindIdentifier)
 }
+
+func TestLex_String(t *testing.T) {
+	input := `{{"omg wow"}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 4)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindString)
+	require.Equal(t, l.Tokens[1].Value, `"omg wow"`)
+}
+
+func TestLex_EscapedString(t *testing.T) {
+	input := `{{"omg \"wow\""}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 4)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindString)
+	require.Equal(t, l.Tokens[1].Value, `"omg \"wow\""`)
+}

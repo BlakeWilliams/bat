@@ -97,14 +97,14 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 		case reflect.Slice:
 			for i := 0; i < v.Len(); i++ {
 				newVars[iteratorName] = i
-				newVars[valueName] = v.Index(i)
+				newVars[valueName] = v.Index(i).Interface()
 
 				eval(body, out, data, newVars)
 			}
 		case reflect.Map:
 			for _, key := range v.MapKeys() {
-				newVars[iteratorName] = key
-				newVars[valueName] = v.MapIndex(key)
+				newVars[iteratorName] = key.Interface()
+				newVars[valueName] = v.MapIndex(key).Interface()
 
 				eval(body, out, data, newVars)
 			}
@@ -166,6 +166,9 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 		default:
 			panic(fmt.Sprintf("access on type %s on line %d", k, n.StartLine))
 		}
+	case parser.KindString:
+		// Cut off opening " and closing "
+		return n.Value[1 : len(n.Value)-1]
 	default:
 		panic(fmt.Sprintf("unsupported access called on type %s", n.Kind))
 	}

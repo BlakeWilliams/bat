@@ -154,6 +154,9 @@ func lexAction(l *Lexer) stateFn {
 	case r == '$':
 		l.next()
 		return lexVariable
+	case r == '"':
+		l.next()
+		return lexString
 	case unicode.IsSpace(r):
 		return lexSpace
 	case unicode.IsLetter(r):
@@ -227,6 +230,33 @@ func lexIdentifier(l *Lexer) stateFn {
 	default:
 		l.emit(KindIdentifier)
 	}
+
+	return lexAction
+}
+
+func lexString(l *Lexer) stateFn {
+	isEscape := false
+
+	for {
+		r := l.next()
+
+		if r == eof {
+			panic("unexpected EOF")
+		}
+
+		if r == '\\' {
+			isEscape = true
+			continue
+		}
+
+		if r == '"' && !isEscape {
+			break
+		}
+
+		isEscape = false
+	}
+
+	l.emit(KindString)
 
 	return lexAction
 }

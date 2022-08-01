@@ -178,3 +178,34 @@ func TestTemplateRange_Map(t *testing.T) {
 	`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplateRange_NestedStringConditional(t *testing.T) {
+	template, err := NewTemplate(`
+{{range $first, $last in people}}
+	{{if $first == "Fox"}}
+		Agent {{$first}} {{$last}}
+	{{else}}
+		Dr. {{$first}} {{$last}}
+	{{end}}
+{{end}}
+	`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `
+
+	
+		Agent Fox Mulder
+	
+
+	
+		Dr. Dana Scully
+	
+
+	`
+	require.Equal(t, expected, b.String())
+}

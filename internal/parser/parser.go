@@ -37,6 +37,7 @@ const (
 	KindFalse      = "false"
 	KindRange      = "range"
 	KindVariable   = "variable"
+	KindString     = "string"
 	// Represents blocks of top-level items for use in if/else, range body, etc.
 	KindBlock = "block"
 )
@@ -218,8 +219,12 @@ func parseLiteralOrAccess(p *parser) *Node {
 		kind = KindTrue
 	case lexer.KindFalse:
 		kind = KindFalse
+	case lexer.KindString:
+		kind = KindString
 	case lexer.KindVariable, lexer.KindIdentifier:
 		return parseVariableChain(p)
+	default:
+		panic(fmt.Sprintf("Unexpected identifier %s", p.peek().Kind.String()))
 	}
 
 	identifierToken := p.next()
@@ -339,7 +344,7 @@ func parseIf(p *parser) *Node {
 	p.skipWhitespace()
 
 	// happy path (if case)
-	node.Children = append(node.Children, parseMany(p)...)
+	node.Children = append(node.Children, parseBlock(p))
 
 	p.skipWhitespace()
 
@@ -348,7 +353,7 @@ func parseIf(p *parser) *Node {
 		p.skipWhitespace()
 		p.expect(lexer.KindRightDelim)
 		// sad path (else case)
-		node.Children = append(node.Children, parseMany(p)...)
+		node.Children = append(node.Children, parseBlock(p))
 		p.skipWhitespace()
 	}
 

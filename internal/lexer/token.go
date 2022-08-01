@@ -25,6 +25,7 @@ const (
 	KindIn
 	KindRange
 	KindComma
+	KindString
 )
 
 type Token struct {
@@ -78,6 +79,8 @@ func (k Kind) String() string {
 		return "range"
 	case KindComma:
 		return "comma"
+	case KindString:
+		return "string"
 	default:
 		return fmt.Sprintf("uknown %d", k)
 	}

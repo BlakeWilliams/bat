@@ -92,12 +92,13 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
 - [ ] Emit better error messages and validate them with tests
 - [ ] Create an engine struct that will enable partials, helper functions, and
       custom escaping functions.
-- [ ] Support strings in templates
+- [x] Support strings in templates
 - [ ] Support integer numbers
 - [ ] Add basic math operations
 - [ ] Simple map class `{ "foo": bar }` for use with partials
 - [ ] Improve stringify logic in the executor (bat.go)
 - [ ] Support channels in `range`
+- [ ] Trim whitespace by default, add control characters to avoid trimming.
 
 ## Maybe
 
