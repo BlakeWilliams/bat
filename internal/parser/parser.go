@@ -38,8 +38,10 @@ const (
 	KindRange      = "range"
 	KindVariable   = "variable"
 	KindString     = "string"
+	KindInt        = "int"
 	// Represents blocks of top-level items for use in if/else, range body, etc.
-	KindBlock = "block"
+	KindBlock  = "block"
+	KindNegate = "negate"
 )
 
 func (n *Node) String() string {
@@ -161,7 +163,7 @@ func parseStatement(p *parser) []*Node {
 			return nodes
 		case lexer.KindEOF:
 			panic("unexpected EOF")
-		case lexer.KindIdentifier, lexer.KindVariable:
+		case lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
 			node := parseExpression(p)
 			nodes = append(nodes, node)
 		case lexer.KindNil:
@@ -187,6 +189,7 @@ func parseStatement(p *parser) []*Node {
 // foo != nil
 func parseExpression(p *parser) *Node {
 	root := parseLiteralOrAccess(p)
+	fmt.Println(root)
 
 	if p.peek().Kind == lexer.KindBang || p.peek().Kind == lexer.KindEqual {
 		operator := parseOperator(p)
@@ -221,6 +224,34 @@ func parseLiteralOrAccess(p *parser) *Node {
 		kind = KindFalse
 	case lexer.KindString:
 		kind = KindString
+	case lexer.KindMinus:
+		switch p.peekn(2).Kind {
+		case lexer.KindNumber:
+			kind = KindInt
+
+			p.next()
+			intNode := p.next()
+			p.skipWhitespace() // copy whitespace skipping logic below before return
+
+			return &Node{
+				Kind:      kind,
+				Value:     "-" + intNode.Value,
+				StartLine: intNode.StartLine,
+				EndLine:   intNode.EndLine,
+			}
+		case lexer.KindVariable, lexer.KindIdentifier:
+			p.next()
+			return &Node{
+				Kind:      KindNegate,
+				StartLine: p.peek().StartLine,
+				EndLine:   p.peek().EndLine,
+				Children:  []*Node{parseVariableChain(p)},
+			}
+		default:
+			panic(fmt.Sprintf("Unexpected token `-` on line %d", p.peek().StartLine))
+		}
+	case lexer.KindNumber:
+		kind = KindInt
 	case lexer.KindVariable, lexer.KindIdentifier:
 		return parseVariableChain(p)
 	default:
@@ -234,32 +265,6 @@ func parseLiteralOrAccess(p *parser) *Node {
 		Value:     identifierToken.Value,
 		StartLine: identifierToken.StartLine,
 		EndLine:   identifierToken.EndLine,
-	}
-
-	if p.peek().Kind == lexer.KindDot {
-		node := identifierNode
-
-		for p.peek().Kind == lexer.KindDot {
-			p.expect(lexer.KindDot)
-
-			identifier := p.expect(lexer.KindIdentifier)
-			identifierNode := &Node{
-				Kind:      KindIdentifier,
-				Value:     identifier.Value,
-				StartLine: identifier.StartLine,
-				EndLine:   identifier.EndLine,
-			}
-
-			newNode := &Node{
-				Kind:      KindAccess,
-				Children:  []*Node{node, identifierNode},
-				StartLine: identifier.StartLine,
-				EndLine:   identifier.EndLine,
-			}
-			node = newNode
-		}
-
-		return node
 	}
 
 	p.skipWhitespace()

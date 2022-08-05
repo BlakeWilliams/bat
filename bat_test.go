@@ -209,3 +209,53 @@ func TestTemplateRange_NestedStringConditional(t *testing.T) {
 	`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplateRange_Numbers(t *testing.T) {
+	template, err := NewTemplate(`{{if 1000 == 1000}}hello {{1000}}!{{end}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `hello 1000!`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_NegativeLiteral(t *testing.T) {
+	template, err := NewTemplate(`{{if -1000 == -1000}}hello {{1000}}!{{end}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `hello 1000!`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_NegativeVariable(t *testing.T) {
+	template, err := NewTemplate(`{{range $i in people}}{{-$i}}!{{end}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": []string{"Fox Mulder", "Dana Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `0!-1!`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_NegativeVariableNonInt(t *testing.T) {
+	template, err := NewTemplate(`{{range $i in people}}{{-$i}}!{{end}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.Error(t, err)
+	// TODO validate line information is provided
+}

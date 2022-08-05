@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strconv"
 
 	"github.com/blakewilliams/bat/internal/lexer"
 	"github.com/blakewilliams/bat/internal/mapsort"
@@ -52,11 +53,11 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 		out.Write([]byte(n.Value))
 	case parser.KindStatement:
 		eval(n.Children[0], out, data, vars)
-	case parser.KindAccess:
+	case parser.KindAccess, parser.KindNegate:
 		value := access(n, data, vars)
 
 		out.Write([]byte(valueToString(value)))
-	case parser.KindIdentifier, parser.KindVariable:
+	case parser.KindIdentifier, parser.KindVariable, parser.KindInt:
 		value := access(n, data, vars)
 
 		out.Write([]byte(valueToString(value)))
@@ -121,12 +122,37 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 
 func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 	switch n.Kind {
+	case parser.KindNegate:
+		value := access(n.Children[0], data, vars)
+		switch reflect.ValueOf(value).Kind() {
+		case reflect.Int:
+			return value.(int) * -1
+		case reflect.Int16:
+			return value.(int16) * -1
+		case reflect.Int32:
+			return value.(int32) * -1
+		case reflect.Int64:
+			return value.(int64) * -1
+		case reflect.Complex64:
+			return value.(complex64) * -1
+		case reflect.Complex128:
+			return value.(complex128) * -1
+		case reflect.Float32:
+			return value.(float32) * -1
+		case reflect.Float64:
+			return value.(float64) * -1
+		default:
+			panic(fmt.Sprintf("can't negate type %s", reflect.ValueOf(value).Kind()))
+		}
 	case parser.KindTrue:
 		return true
 	case parser.KindFalse:
 		return false
 	case parser.KindNil:
 		return nil
+	case parser.KindInt:
+		val, _ := strconv.Atoi(n.Value)
+		return val
 	case parser.KindInfix:
 		left := access(n.Children[0], data, vars)
 		right := access(n.Children[2], data, vars)

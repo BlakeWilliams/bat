@@ -142,6 +142,50 @@ func TestParse_String(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Int(t *testing.T) {
+	l := lexer.Lex(`{{1000}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInt, "1000", []*Node{}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_NegativeInt(t *testing.T) {
+	l := lexer.Lex(`{{-1000}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInt, "-1000", []*Node{}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_NegateVariable(t *testing.T) {
+	l := lexer.Lex(`{{-$foo}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindNegate, "", []*Node{
+				n(KindVariable, "$foo", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

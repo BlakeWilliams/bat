@@ -302,3 +302,28 @@ func TestLex_EscapedString(t *testing.T) {
 	require.Equal(t, l.Tokens[1].Kind, KindString)
 	require.Equal(t, l.Tokens[1].Value, `"omg \"wow\""`)
 }
+
+func TestLex_Ints(t *testing.T) {
+	input := `{{1000}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 4)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindNumber)
+	require.Equal(t, l.Tokens[1].Value, `1000`)
+}
+
+func TestLex_NegativeInts(t *testing.T) {
+	input := `{{-1000}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 5)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindMinus)
+	require.Equal(t, l.Tokens[2].Kind, KindNumber)
+	require.Equal(t, l.Tokens[2].Value, `1000`)
+}

@@ -139,6 +139,10 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindHash)
 		return lexAction
+	case r == '-':
+		l.next()
+		l.emit(KindMinus)
+		return lexAction
 	case r == '=':
 		l.next()
 		l.emit(KindEqual)
@@ -161,8 +165,14 @@ func lexAction(l *Lexer) stateFn {
 		return lexSpace
 	case unicode.IsLetter(r):
 		return lexIdentifier
+	case unicode.IsNumber(r):
+		return lexNumber
+	default:
+		l.emitError(
+			fmt.Sprintf("unexpected token %s on line %d", string(l.peek()), l.Line),
+		)
+		return nil
 	}
-	return nil
 }
 
 func lexRightDelim(l *Lexer) stateFn {
@@ -276,6 +286,25 @@ func lexSpace(l *Lexer) stateFn {
 	}
 
 	l.emit(KindSpace)
+
+	return lexAction
+}
+
+func lexNumber(l *Lexer) stateFn {
+	for {
+		r := l.next()
+
+		if r == eof {
+			break
+		}
+
+		if !unicode.IsNumber(r) {
+			l.backup()
+			break
+		}
+	}
+
+	l.emit(KindNumber)
 
 	return lexAction
 }

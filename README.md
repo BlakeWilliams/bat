@@ -30,10 +30,10 @@ Here's an overview of more advanced usage:
 Bat supports the following primitives that can be used within `{{}}`
 expressions:
 
-- `true`
-- `false`
-- `nil`
-- `"string"`
+- booleans - `true` and `false`
+- nil - `nil`
+- strings - `"string value"` and `"string with \"escaped\" values"`
+- integers - `1000` and `-1000`
 
 ### Conditionals
 
