@@ -96,7 +96,7 @@ If a map is passed to `range`, it will attempt to sort it before iteration if th
 - [ ] Create an engine struct that will enable partials, helper functions, and
       custom escaping functions.
 - [x] Support strings in templates
-- [ ] Support integer numbers
+- [x] Support integer numbers
 - [ ] Add basic math operations
 - [ ] Simple map class `{ "foo": bar }` for use with partials
 - [ ] Improve stringify logic in the executor (bat.go)
