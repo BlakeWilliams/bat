@@ -102,6 +102,7 @@ If a map is passed to `range`, it will attempt to sort it before iteration if th
 - [ ] Improve stringify logic in the executor (bat.go)
 - [ ] Support channels in `range`
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
+- [ ] Support method calls
 
 ## Maybe
 
