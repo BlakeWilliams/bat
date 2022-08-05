@@ -114,4 +114,4 @@ If a map is passed to `range`, it will attempt to sort it before iteration if th
 ## Don't
 
 - Add parens for complex options
-- Variable declarations that look like provided data access
+- Variable declarations that look like provided data access (use $ for template locals, plain identifiers for everything else)
