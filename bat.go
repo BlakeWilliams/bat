@@ -3,6 +3,7 @@ package bat
 import (
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"reflect"
 	"strconv"
@@ -12,12 +13,31 @@ import (
 	"github.com/blakewilliams/bat/internal/parser"
 )
 
+// Represents a single template that can be rendered.
 type Template struct {
-	Name string
-	ast  *parser.Node
+	Name       string
+	ast        *parser.Node
+	escapeFunc func(string) string
 }
 
-func NewTemplate(input string) (Template, error) {
+// An escapeFunc that returns text as-is
+func NoEscape(s string) string { return s }
+
+// An escapeFunc that returns text as escaped HTML
+var HTMLEscape func(s string) string = html.EscapeString
+
+// Safe values are not escaped. These should be used carefully as they expose
+// risk to your templates outputting unsafe values, especially if the values
+// are derived from user input.
+type Safe string
+
+// A function that allows the template to be customized when using NewTemplate.
+type TemplateOption = func(*Template)
+
+// Creates a new template using the provided input. Options can be provided to
+// customize the template, such as setting the function used to escape unsafe
+// input.
+func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
 	l := lexer.Lex(input)
 	ast, err := parser.Parse(l)
 
@@ -25,9 +45,16 @@ func NewTemplate(input string) (Template, error) {
 		return Template{}, fmt.Errorf("could not create template: %w", err)
 	}
 
-	return Template{ast: ast}, nil
+	t := Template{ast: ast, escapeFunc: NoEscape}
+	for _, opt := range opts {
+		opt(&t)
+	}
+
+	return t, nil
 }
 
+// Executes the template, streaming output to out. The data parameter is made
+// available to the template.
 func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -41,37 +68,45 @@ func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 	}()
 
 	for _, child := range t.ast.Children {
-		eval(child, out, data, make(map[string]any))
+		eval(child, t.escapeFunc, out, data, make(map[string]any))
 	}
 
 	return nil
 }
 
-func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]any) {
+// An option function that provides a custom escape function that is used to
+// escape unsafe dynamic template values.
+func WithEscapeFunc(fn func(string) string) func(*Template) {
+	return func(t *Template) {
+		t.escapeFunc = fn
+	}
+}
+
+func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, vars map[string]any) {
 	switch n.Kind {
 	case parser.KindText:
 		out.Write([]byte(n.Value))
 	case parser.KindStatement:
-		eval(n.Children[0], out, data, vars)
+		eval(n.Children[0], escapeFunc, out, data, vars)
 	case parser.KindAccess, parser.KindNegate:
 		value := access(n, data, vars)
 
-		out.Write([]byte(valueToString(value)))
+		out.Write([]byte(valueToString(value, escapeFunc)))
 	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix:
 		value := access(n, data, vars)
 
-		out.Write([]byte(valueToString(value)))
+		out.Write([]byte(valueToString(value, escapeFunc)))
 	case parser.KindIf:
 		conditionResult := access(n.Children[0], data, vars)
 
 		if conditionResult == true {
-			eval(n.Children[1], out, data, vars)
+			eval(n.Children[1], escapeFunc, out, data, vars)
 		} else if n.Children[2] != nil {
-			eval(n.Children[2], out, data, vars)
+			eval(n.Children[2], escapeFunc, out, data, vars)
 		}
 	case parser.KindBlock:
 		for _, child := range n.Children {
-			eval(child, out, data, vars)
+			eval(child, escapeFunc, out, data, vars)
 		}
 	case parser.KindRange:
 		newVars := make(map[string]any, len(vars)+2)
@@ -101,7 +136,7 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 				newVars[iteratorName] = i
 				newVars[valueName] = v.Index(i).Interface()
 
-				eval(body, out, data, newVars)
+				eval(body, escapeFunc, out, data, newVars)
 			}
 		case reflect.Map:
 			sorted := mapsort.Sort(v)
@@ -110,7 +145,7 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 				newVars[iteratorName] = sorted.Keys[i].Interface()
 				newVars[valueName] = sorted.Values[i].Interface()
 
-				eval(body, out, data, newVars)
+				eval(body, escapeFunc, out, data, newVars)
 			}
 		default:
 			panic(fmt.Sprintf("attempted to range over %s", v.Kind()))
@@ -216,6 +251,17 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 
 // TODO this needs to check for the stringer interface, and maybe handle values
 // a bit more gracefully...
-func valueToString(v any) string {
-	return fmt.Sprintf("%v", v)
+func valueToString(v any, escape func(string) string) string {
+	if val, ok := v.(fmt.Stringer); ok {
+		return escape(val.String())
+	}
+
+	switch val := v.(type) {
+	case Safe:
+		return string(val)
+	case string:
+		return escape(val)
+	default:
+		return escape(fmt.Sprintf("%v", v))
+	}
 }

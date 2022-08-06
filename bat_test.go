@@ -324,3 +324,48 @@ func TestTemplate_Modulo(t *testing.T) {
 	expected := "0"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_Escape(t *testing.T) {
+	template, err := NewTemplate(`{{userInput}}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{"userInput": "<h1>Hello!</h1>"}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "&lt;h1&gt;Hello!&lt;/h1&gt;"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_EscapeSafe(t *testing.T) {
+	template, err := NewTemplate(`{{userInput}}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{"userInput": Safe("<h1>Hello!</h1>")}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "<h1>Hello!</h1>"
+	require.Equal(t, expected, b.String())
+}
+
+type stringerStruct struct {
+	value string
+}
+
+func (s *stringerStruct) String() string { return s.value }
+
+func TestTemplate_Stringer(t *testing.T) {
+	template, err := NewTemplate(`{{userInput}}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{"userInput": &stringerStruct{value: "foo"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "foo"
+	require.Equal(t, expected, b.String())
+}
