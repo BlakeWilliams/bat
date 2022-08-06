@@ -259,3 +259,16 @@ func TestTemplate_NegativeVariableNonInt(t *testing.T) {
 	require.Error(t, err)
 	// TODO validate line information is provided
 }
+
+func TestTemplate_Subtraction(t *testing.T) {
+	template, err := NewTemplate(`{{100 - 5}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "95"
+	require.Equal(t, expected, b.String())
+}

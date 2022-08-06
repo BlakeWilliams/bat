@@ -146,7 +146,7 @@ func parseMany(p *parser) []*Node {
 		case lexer.KindEnd:
 			return nodes
 		default:
-			panic(fmt.Sprintf("unsupported token %v", p.peek()))
+			p.errorWithLoc("unsupported token %v", p.peek().Value)
 		}
 	}
 }
@@ -179,9 +179,16 @@ func parseStatement(p *parser) []*Node {
 			node := parseRange(p)
 			nodes = append(nodes, node)
 		default:
-			panic(fmt.Sprintf("unexpected token %v", p.peek().Value))
+			p.errorWithLoc("unexpected token %v", p.peek().Value)
 		}
 	}
+}
+
+func (p *parser) errorWithLoc(msg string, formatting ...any) {
+	formatted := fmt.Sprintf(msg, formatting...)
+	formatted += fmt.Sprintf(": on line %d", p.peek().StartLine)
+
+	panic(formatted)
 }
 
 // parses expressions, like:
@@ -189,28 +196,40 @@ func parseStatement(p *parser) []*Node {
 // foo != nil
 func parseExpression(p *parser) *Node {
 	root := parseLiteralOrAccess(p)
-	fmt.Println(root)
 
-	if p.peek().Kind == lexer.KindBang || p.peek().Kind == lexer.KindEqual {
-		operator := parseOperator(p)
-		p.skipWhitespace()
-
-		node := &Node{
-			Kind:      KindInfix,
-			Children:  []*Node{},
-			StartLine: root.StartLine,
-			EndLine:   p.peek().EndLine,
+	// check for ==, -, !=,
+	// protect against foo -1 vs foo - 1 and foo != bar vs foo !bar
+	next := p.peek()
+	switch next.Kind {
+	case lexer.KindMinus:
+		if p.peekn(2).Kind != lexer.KindSpace {
+			return root
 		}
-
-		node.Children = append(node.Children, root)
-		node.Children = append(node.Children, operator)
-		node.Children = append(node.Children, parseLiteralOrAccess(p))
-		p.expect(lexer.KindRightDelim)
-
-		return node
+	case lexer.KindBang:
+		if p.peekn(2).Kind != lexer.KindEqual {
+			return root
+		}
+	case lexer.KindEqual:
+		// do nothing, fall through to parse operator
+	default:
+		return root
 	}
 
-	return root
+	operator := parseOperator(p)
+	p.skipWhitespace()
+
+	node := &Node{
+		Kind:      KindInfix,
+		Children:  []*Node{},
+		StartLine: root.StartLine,
+		EndLine:   p.peek().EndLine,
+	}
+
+	node.Children = append(node.Children, root)
+	node.Children = append(node.Children, operator)
+	node.Children = append(node.Children, parseLiteralOrAccess(p))
+
+	return node
 }
 
 func parseLiteralOrAccess(p *parser) *Node {
@@ -241,6 +260,7 @@ func parseLiteralOrAccess(p *parser) *Node {
 			}
 		case lexer.KindVariable, lexer.KindIdentifier:
 			p.next()
+			p.skipWhitespace()
 			return &Node{
 				Kind:      KindNegate,
 				StartLine: p.peek().StartLine,
@@ -347,6 +367,7 @@ func parseIf(p *parser) *Node {
 	// TODO validate this returns a KindInfix, or KindNot
 	node.Children = append(node.Children, parseExpression(p))
 	p.skipWhitespace()
+	p.expect(lexer.KindRightDelim)
 
 	// happy path (if case)
 	node.Children = append(node.Children, parseBlock(p))
@@ -375,8 +396,12 @@ func parseOperator(p *parser) *Node {
 		StartLine: token.StartLine,
 	}
 
-	token = p.expect(lexer.KindEqual)
-	node.Value += "="
+	if token.Kind == lexer.KindEqual || token.Kind == lexer.KindBang {
+		token = p.expect(lexer.KindEqual)
+		node.Value += "="
+	} else {
+		p.skipWhitespace()
+	}
 	node.EndLine = token.EndLine
 
 	return node

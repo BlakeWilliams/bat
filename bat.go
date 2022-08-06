@@ -57,7 +57,7 @@ func eval(n *parser.Node, out io.Writer, data map[string]any, vars map[string]an
 		value := access(n, data, vars)
 
 		out.Write([]byte(valueToString(value)))
-	case parser.KindIdentifier, parser.KindVariable, parser.KindInt:
+	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix:
 		value := access(n, data, vars)
 
 		out.Write([]byte(valueToString(value)))
@@ -157,13 +157,17 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 		left := access(n.Children[0], data, vars)
 		right := access(n.Children[2], data, vars)
 
-		if n.Children[1].Value == "!=" {
+		switch n.Children[1].Value {
+		case "!=":
 			return left != right
-		} else if n.Children[1].Value == "==" {
+		case "==":
 			return left == right
-		} else {
+		case "-":
+			return subtract(left, right)
+		default:
 			panic(fmt.Sprintf("Unsupported operator: %s on line %d", n.Children[1].Value, n.Children[1].StartLine))
 		}
+
 	case parser.KindIdentifier:
 		return data[n.Value]
 	case parser.KindVariable:

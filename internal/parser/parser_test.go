@@ -186,6 +186,24 @@ func TestParse_NegateVariable(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Subtraction(t *testing.T) {
+	l := lexer.Lex(`{{5 - 3}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindInt, "5", []*Node{}),
+				n(KindOperator, "-", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }
