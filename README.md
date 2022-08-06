@@ -116,6 +116,7 @@ implementation.
 - [ ] Emit better error messages and validate them with tests
 - [ ] Create an engine struct that will enable partials, helper functions, and
       custom escaping functions.
+- [x] Add escaping support to templates
 - [x] Support strings in templates
 - [x] Support integer numbers
 - [x] Add basic math operations
