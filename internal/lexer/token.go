@@ -28,6 +28,10 @@ const (
 	KindString
 	KindNumber
 	KindMinus
+	KindPlus
+	KindAsterisk
+	KindSlash
+	KindPercent
 )
 
 type Token struct {
@@ -87,6 +91,14 @@ func (k Kind) String() string {
 		return "number"
 	case KindMinus:
 		return "minus"
+	case KindPlus:
+		return "plus"
+	case KindAsterisk:
+		return "asterisk"
+	case KindSlash:
+		return "slash"
+	case KindPercent:
+		return "percent"
 	default:
 		return fmt.Sprintf("uknown %d", k)
 	}

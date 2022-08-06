@@ -151,6 +151,22 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindBang)
 		return lexAction
+	case r == '+':
+		l.next()
+		l.emit(KindPlus)
+		return lexAction
+	case r == '*':
+		l.next()
+		l.emit(KindAsterisk)
+		return lexAction
+	case r == '/':
+		l.next()
+		l.emit(KindSlash)
+		return lexAction
+	case r == '%':
+		l.next()
+		l.emit(KindPercent)
+		return lexAction
 	case r == ',':
 		l.next()
 		l.emit(KindComma)

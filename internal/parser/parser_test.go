@@ -204,6 +204,78 @@ func TestParse_Subtraction(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Multiply(t *testing.T) {
+	l := lexer.Lex(`{{5 * 3}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindInt, "5", []*Node{}),
+				n(KindOperator, "*", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_Divide(t *testing.T) {
+	l := lexer.Lex(`{{5 / 3}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindInt, "5", []*Node{}),
+				n(KindOperator, "/", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_Add(t *testing.T) {
+	l := lexer.Lex(`{{5 + 3}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindInt, "5", []*Node{}),
+				n(KindOperator, "+", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_Modulo(t *testing.T) {
+	l := lexer.Lex(`{{5 % 3}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindInt, "5", []*Node{}),
+				n(KindOperator, "%", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

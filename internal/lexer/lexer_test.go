@@ -327,3 +327,17 @@ func TestLex_NegativeInts(t *testing.T) {
 	require.Equal(t, l.Tokens[2].Kind, KindNumber)
 	require.Equal(t, l.Tokens[2].Value, `1000`)
 }
+
+func TestLex_Operators(t *testing.T) {
+	input := `{{+-*/%}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 8)
+
+	require.Equal(t, l.Tokens[1].Kind, KindPlus)
+	require.Equal(t, l.Tokens[2].Kind, KindMinus)
+	require.Equal(t, l.Tokens[3].Kind, KindAsterisk)
+	require.Equal(t, l.Tokens[4].Kind, KindSlash)
+	require.Equal(t, l.Tokens[5].Kind, KindPercent)
+}

@@ -164,6 +164,14 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 			return left == right
 		case "-":
 			return subtract(left, right)
+		case "+":
+			return add(left, right)
+		case "*":
+			return multiply(left, right)
+		case "/":
+			return divide(left, right)
+		case "%":
+			return modulo(left, right)
 		default:
 			panic(fmt.Sprintf("Unsupported operator: %s on line %d", n.Children[1].Value, n.Children[1].StartLine))
 		}

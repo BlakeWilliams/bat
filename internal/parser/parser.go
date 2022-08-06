@@ -209,7 +209,7 @@ func parseExpression(p *parser) *Node {
 		if p.peekn(2).Kind != lexer.KindEqual {
 			return root
 		}
-	case lexer.KindEqual:
+	case lexer.KindEqual, lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent:
 		// do nothing, fall through to parse operator
 	default:
 		return root

@@ -87,6 +87,27 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
 
 If a map is passed to `range`, it will attempt to sort it before iteration if the key is able to be compared and is implemented in the `internal/mapsort` package.
 
+### Math
+
+Basic math is supported, with some caveats. When performing math operations,
+the left most type is converted into the right most type, when possible:
+
+```
+// int32 - int64
+   100   -   200 // returns int64
+```
+
+The following operations are supported:
+
+- `-` Subtraction
+- `+` Addition
+- `*` Multiplication
+- `/` Division
+- `%` Modulus
+
+More comprehensive casting logic would be welcome in the form of a PR to work
+around some potential bugs and edge cases due to the naive casting
+implementation.
 
 ## TODO
 
@@ -97,9 +118,9 @@ If a map is passed to `range`, it will attempt to sort it before iteration if th
       custom escaping functions.
 - [x] Support strings in templates
 - [x] Support integer numbers
-- [ ] Add basic math operations
+- [x] Add basic math operations
 - [ ] Simple map class `{ "foo": bar }` for use with partials
-- [ ] Improve stringify logic in the executor (bat.go)
+- [ ] Improve stringify logic in the executor (`bat.go`)
 - [ ] Support channels in `range`
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
 - [ ] Support method calls
@@ -116,3 +137,4 @@ If a map is passed to `range`, it will attempt to sort it before iteration if th
 
 - Add parens for complex options
 - Variable declarations that look like provided data access (use $ for template locals, plain identifiers for everything else)
+- Add string concatenation

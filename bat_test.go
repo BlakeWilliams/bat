@@ -272,3 +272,55 @@ func TestTemplate_Subtraction(t *testing.T) {
 	expected := "95"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_Addition(t *testing.T) {
+	template, err := NewTemplate(`{{100 + 5}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "105"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_Multiplication(t *testing.T) {
+	template, err := NewTemplate(`{{100 * 5}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "500"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_Division(t *testing.T) {
+	template, err := NewTemplate(`{{100 / 5}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "20"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_Modulo(t *testing.T) {
+	template, err := NewTemplate(`{{100 % 5}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "0"
+	require.Equal(t, expected, b.String())
+}
