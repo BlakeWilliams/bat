@@ -334,6 +334,29 @@ func TestParse_ChainCall(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Hash(t *testing.T) {
+	l := lexer.Lex(`{{ {foo: 1, bar: "2"} }}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindMap, "", []*Node{
+				n(KindPair, "", []*Node{
+					n(KindIdentifier, `foo`, nil),
+					n(KindInt, "1", nil),
+				}),
+				n(KindPair, "", []*Node{
+					n(KindIdentifier, `bar`, nil),
+					n(KindString, `"2"`, nil),
+				}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

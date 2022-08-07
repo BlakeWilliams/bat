@@ -432,3 +432,16 @@ func TestTemplate_CallNestedChain(t *testing.T) {
 	expected := "FM"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_Hash(t *testing.T) {
+	template, err := NewTemplate(`{{ { foo: 1, bar: 2} }}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "1"
+	require.Equal(t, expected, b.String())
+}

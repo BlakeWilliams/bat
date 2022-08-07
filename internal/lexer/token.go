@@ -34,6 +34,9 @@ const (
 	KindPercent
 	KindOpenParen
 	KindCloseParen
+	KindOpenCurly
+	KindCloseCurly
+	KindColon
 )
 
 type Token struct {
@@ -105,6 +108,12 @@ func (k Kind) String() string {
 		return "openParen"
 	case KindCloseParen:
 		return "closeParen"
+	case KindOpenCurly:
+		return "openCurly"
+	case KindCloseCurly:
+		return "closeCurly"
+	case KindColon:
+		return "colon"
 	default:
 		return fmt.Sprintf("uknown %d", k)
 	}

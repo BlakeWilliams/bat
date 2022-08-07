@@ -43,6 +43,8 @@ const (
 	KindBlock  = "block"
 	KindNegate = "negate"
 	KindCall   = "call"
+	KindMap    = "map"
+	KindPair   = "pair"
 )
 
 func (n *Node) String() string {
@@ -163,6 +165,9 @@ func parseStatement(p *parser) *Node {
 		p.next()
 	case lexer.KindEOF:
 		panic("unexpected EOF")
+	case lexer.KindOpenCurly:
+		p.next()
+		return parseMap(p)
 	case lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
 		return parseExpression(p)
 	case lexer.KindNil:
@@ -492,4 +497,55 @@ func parseBlock(p *parser) *Node {
 	node.Children = append(node.Children, parseMany(p)...)
 
 	return node
+}
+
+func parseMap(p *parser) *Node {
+	p.skipWhitespace()
+	mapNode := &Node{
+		Kind:      KindMap,
+		StartLine: p.peek().StartLine,
+	}
+
+	pairs := make([]*Node, 0)
+	for {
+		if p.peek().Kind == lexer.KindCloseCurly {
+			break
+		}
+
+		if p.peek().Kind == lexer.KindEOF {
+			p.errorWithLoc("unexpected EOF")
+		}
+
+		key := p.expect(lexer.KindIdentifier)
+		p.expect(lexer.KindColon)
+		p.skipWhitespace()
+		value := parseLiteralOrAccess(p)
+
+		pair := &Node{
+			Kind: KindPair,
+			Children: []*Node{
+				{Kind: KindIdentifier, Value: key.Value, StartLine: key.StartLine, EndLine: key.EndLine},
+				value,
+			},
+			StartLine: key.StartLine,
+			EndLine:   value.EndLine,
+		}
+
+		pairs = append(pairs, pair)
+
+		// check for comma
+		p.skipWhitespace()
+		if p.peek().Kind == lexer.KindComma {
+			p.expect(lexer.KindComma)
+			p.skipWhitespace()
+		}
+	}
+
+	mapNode.Children = pairs
+	mapNode.EndLine = pairs[len(pairs)-1].EndLine
+
+	p.skipWhitespace()
+	p.expect(lexer.KindCloseCurly)
+
+	return mapNode
 }

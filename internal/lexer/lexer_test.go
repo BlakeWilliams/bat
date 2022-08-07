@@ -354,3 +354,18 @@ func TestLex_Parens(t *testing.T) {
 	require.Equal(t, l.Tokens[3].Kind, KindNumber)
 	require.Equal(t, l.Tokens[4].Kind, KindCloseParen)
 }
+
+func TestLex_Curly(t *testing.T) {
+	input := `{{ {foo: 1} }}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 11)
+
+	require.Equal(t, l.Tokens[1].Kind, KindSpace)
+	require.Equal(t, l.Tokens[2].Kind, KindOpenCurly)
+	require.Equal(t, l.Tokens[3].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[4].Kind, KindColon)
+	require.Equal(t, l.Tokens[5].Kind, KindSpace)
+	require.Equal(t, l.Tokens[6].Kind, KindNumber)
+}

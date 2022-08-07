@@ -99,7 +99,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 		value := access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
-	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix, parser.KindCall:
+	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix, parser.KindCall, parser.KindMap:
 		value := access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
@@ -238,6 +238,17 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 		return nil
 	case parser.KindVariable:
 		return vars[n.Value]
+	case parser.KindMap:
+		m := make(map[string]any, len(n.Children))
+
+		for _, child := range n.Children {
+			key := child.Children[0]
+			value := child.Children[0]
+
+			m[key.Value] = access(value, data, helpers, vars)
+		}
+
+		return m
 	case parser.KindAccess:
 		root := access(n.Children[0], data, helpers, vars)
 		propName := n.Children[1].Value

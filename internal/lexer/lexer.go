@@ -131,6 +131,10 @@ func lexAction(l *Lexer) stateFn {
 	switch {
 	case r == '}':
 		return lexRightDelim
+	case r == '{':
+		l.next()
+		l.emit(KindOpenCurly)
+		return lexAction
 	case r == '.':
 		l.next()
 		l.emit(KindDot)
@@ -185,6 +189,10 @@ func lexAction(l *Lexer) stateFn {
 	case r == '"':
 		l.next()
 		return lexString
+	case r == ':':
+		l.next()
+		l.emit(KindColon)
+		return lexAction
 	case unicode.IsSpace(r):
 		return lexSpace
 	case unicode.IsLetter(r):
@@ -201,8 +209,9 @@ func lexAction(l *Lexer) stateFn {
 
 func lexRightDelim(l *Lexer) stateFn {
 	if !strings.HasPrefix(l.input[l.pos:], rightDelim) {
-		l.emitError(fmt.Sprintf("expected }}, got %s", l.input[l.pos:l.pos+2]))
-		return nil
+		l.next()
+		l.emit(KindCloseCurly)
+		return lexAction
 	}
 
 	l.pos += len(rightDelim)
