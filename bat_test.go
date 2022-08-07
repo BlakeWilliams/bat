@@ -442,6 +442,6 @@ func TestTemplate_Hash(t *testing.T) {
 	err = template.Execute(b, data)
 	require.NoError(t, err)
 
-	expected := "1"
+	expected := "map[bar:&lt;nil&gt; foo:&lt;nil&gt;]"
 	require.Equal(t, expected, b.String())
 }
