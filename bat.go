@@ -46,7 +46,7 @@ func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
 		return Template{}, fmt.Errorf("could not create template: %w", err)
 	}
 
-	t := Template{ast: ast, escapeFunc: NoEscape}
+	t := Template{ast: ast, escapeFunc: HTMLEscape}
 	for _, opt := range opts {
 		opt(&t)
 	}

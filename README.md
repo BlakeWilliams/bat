@@ -158,6 +158,41 @@ t.Execute(out, map[string]any{})
 
 ### Escaping
 
+Templates can be provided a custom escape function with the signature
+`func(string) string` that will be called on the resulting output from `{{}}`
+blocks.
+
+There are two escape functions that can be utilized, `NoEscape` which does no
+escaping, and `HTMLEscape` which delegates to `html.EscapeString`, which
+escapes HTML.
+
+The default escape function is `HTMLEscape` for safety reasons.
+
+e.g.
+
+```go
+// This template will escape HTML from the output of `{{}}` blocks
+t := NewTemplate("{{foo}}", WithEscapeFunc(HTMLEscape))
+```
+
+Escaping can be avoided by returning the `bat.Safe` type from the result of a
+`{{}}` block.
+
+e.g.
+
+```
+t := bat.NewTemplate(`{{output}}`, WithEscapeFunc(HTMLEscape))
+
+// output "Hello there!"
+out := new(bytes.Buffer)
+
+// outputs &lt;h1&gt;Hello!&lt;/h1^gt;
+t.Execute(out, map[string]any{"output": "<h1>Hello!</h1>"})
+
+// outputs <h1>Hello!</h1>
+t.Execute(out, map[string]any{"output": bat.Safe("<h1>Hello!</h1>")})
+```
+
 ### Math
 
 Basic math is supported, with some caveats. When performing math operations,
