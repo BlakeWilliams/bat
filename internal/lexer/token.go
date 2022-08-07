@@ -32,6 +32,8 @@ const (
 	KindAsterisk
 	KindSlash
 	KindPercent
+	KindOpenParen
+	KindCloseParen
 )
 
 type Token struct {
@@ -99,6 +101,10 @@ func (k Kind) String() string {
 		return "slash"
 	case KindPercent:
 		return "percent"
+	case KindOpenParen:
+		return "openParen"
+	case KindCloseParen:
+		return "closeParen"
 	default:
 		return fmt.Sprintf("uknown %d", k)
 	}

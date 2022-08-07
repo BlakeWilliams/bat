@@ -341,3 +341,16 @@ func TestLex_Operators(t *testing.T) {
 	require.Equal(t, l.Tokens[4].Kind, KindSlash)
 	require.Equal(t, l.Tokens[5].Kind, KindPercent)
 }
+
+func TestLex_Parens(t *testing.T) {
+	input := `{{foo(1)}}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 7)
+
+	require.Equal(t, l.Tokens[1].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[2].Kind, KindOpenParen)
+	require.Equal(t, l.Tokens[3].Kind, KindNumber)
+	require.Equal(t, l.Tokens[4].Kind, KindCloseParen)
+}

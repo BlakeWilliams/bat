@@ -42,6 +42,7 @@ const (
 	// Represents blocks of top-level items for use in if/else, range body, etc.
 	KindBlock  = "block"
 	KindNegate = "negate"
+	KindCall   = "call"
 )
 
 func (n *Node) String() string {
@@ -292,7 +293,7 @@ func parseLiteralOrAccess(p *parser) *Node {
 	return identifierNode
 }
 
-func parseVariableChain(p *parser) *Node {
+func parseVariable(p *parser) *Node {
 	identifierToken := p.next()
 
 	kind := KindIdentifier
@@ -305,34 +306,66 @@ func parseVariableChain(p *parser) *Node {
 		panic(fmt.Sprintf("unexpected token %s, expected variable or identifier", identifierToken.Value))
 	}
 
-	identifierNode := &Node{
+	rootNode := &Node{
 		Kind:      kind,
 		Value:     identifierToken.Value,
 		StartLine: identifierToken.StartLine,
 		EndLine:   identifierToken.EndLine,
 	}
 
-	if p.peek().Kind == lexer.KindDot {
-		node := identifierNode
+	return rootNode
+}
 
-		for p.peek().Kind == lexer.KindDot {
-			p.expect(lexer.KindDot)
+func parseVariableChain(p *parser) *Node {
+	rootNode := parseVariable(p)
 
-			identifier := p.expect(lexer.KindIdentifier)
-			identifierNode := &Node{
-				Kind:      KindIdentifier,
-				Value:     identifier.Value,
-				StartLine: identifier.StartLine,
-				EndLine:   identifier.EndLine,
+	p.skipWhitespace()
+
+	if p.peek().Kind == lexer.KindDot || p.peek().Kind == lexer.KindOpenParen {
+		node := rootNode
+
+	loop:
+		for {
+			switch p.peek().Kind {
+			case lexer.KindDot:
+				p.expect(lexer.KindDot)
+				childNode := parseVariable(p)
+
+				newNode := &Node{
+					Kind:      KindAccess,
+					Children:  []*Node{node, childNode},
+					StartLine: childNode.StartLine,
+					EndLine:   childNode.EndLine,
+				}
+
+				node = newNode
+			case lexer.KindOpenParen:
+				p.expect(lexer.KindOpenParen)
+				newNode := &Node{
+					Kind:      KindCall,
+					Children:  []*Node{node},
+					StartLine: rootNode.StartLine,
+				}
+
+				for {
+					p.skipWhitespace()
+					if p.peek().Kind == lexer.KindCloseParen {
+						break
+					}
+
+					newNode.Children = append(newNode.Children, parseExpression(p))
+
+					if p.peek().Kind == lexer.KindComma {
+						p.expect(lexer.KindComma)
+					}
+				}
+
+				p.expect(lexer.KindCloseParen)
+
+				node = newNode
+			default:
+				break loop
 			}
-
-			newNode := &Node{
-				Kind:      KindAccess,
-				Children:  []*Node{node, identifierNode},
-				StartLine: identifier.StartLine,
-				EndLine:   identifier.EndLine,
-			}
-			node = newNode
 		}
 
 		return node
@@ -340,7 +373,7 @@ func parseVariableChain(p *parser) *Node {
 
 	p.skipWhitespace()
 
-	return identifierNode
+	return rootNode
 }
 
 func (p *parser) expect(kind lexer.Kind) lexer.Token {

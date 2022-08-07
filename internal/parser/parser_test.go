@@ -276,6 +276,64 @@ func TestParse_Modulo(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Call(t *testing.T) {
+	l := lexer.Lex(`{{foo()}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindCall, "", []*Node{
+				n(KindIdentifier, "foo", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_CallArgs(t *testing.T) {
+	l := lexer.Lex(`{{foo(1, 2,3  , "bar" )}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindCall, "", []*Node{
+				n(KindIdentifier, "foo", []*Node{}),
+				n(KindInt, "1", []*Node{}),
+				n(KindInt, "2", []*Node{}),
+				n(KindInt, "3", []*Node{}),
+				n(KindString, "\"bar\"", []*Node{}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_ChainCall(t *testing.T) {
+	l := lexer.Lex(`{{foo.bar.baz()}}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindCall, "", []*Node{
+				n(KindAccess, "", []*Node{
+					n(KindAccess, "", []*Node{
+						n(KindIdentifier, "foo", nil),
+						n(KindIdentifier, "bar", nil),
+					}),
+					n(KindIdentifier, "baz", nil),
+				}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

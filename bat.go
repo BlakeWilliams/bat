@@ -17,6 +17,7 @@ import (
 type Template struct {
 	Name       string
 	ast        *parser.Node
+	helpers    map[string]any
 	escapeFunc func(string) string
 }
 
@@ -68,7 +69,7 @@ func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 	}()
 
 	for _, child := range t.ast.Children {
-		eval(child, t.escapeFunc, out, data, make(map[string]any))
+		eval(child, t.escapeFunc, out, data, t.helpers, make(map[string]any))
 	}
 
 	return nil
@@ -82,31 +83,37 @@ func WithEscapeFunc(fn func(string) string) func(*Template) {
 	}
 }
 
-func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, vars map[string]any) {
+func WithHelpers(fns map[string]any) TemplateOption {
+	return func(t *Template) {
+		t.helpers = fns
+	}
+}
+
+func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, helpers map[string]any, vars map[string]any) {
 	switch n.Kind {
 	case parser.KindText:
 		out.Write([]byte(n.Value))
 	case parser.KindStatement:
-		eval(n.Children[0], escapeFunc, out, data, vars)
+		eval(n.Children[0], escapeFunc, out, data, helpers, vars)
 	case parser.KindAccess, parser.KindNegate:
-		value := access(n, data, vars)
+		value := access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
-	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix:
-		value := access(n, data, vars)
+	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix, parser.KindCall:
+		value := access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
 	case parser.KindIf:
-		conditionResult := access(n.Children[0], data, vars)
+		conditionResult := access(n.Children[0], data, helpers, vars)
 
 		if conditionResult == true {
-			eval(n.Children[1], escapeFunc, out, data, vars)
+			eval(n.Children[1], escapeFunc, out, data, helpers, vars)
 		} else if n.Children[2] != nil {
-			eval(n.Children[2], escapeFunc, out, data, vars)
+			eval(n.Children[2], escapeFunc, out, data, helpers, vars)
 		}
 	case parser.KindBlock:
 		for _, child := range n.Children {
-			eval(child, escapeFunc, out, data, vars)
+			eval(child, escapeFunc, out, data, helpers, vars)
 		}
 	case parser.KindRange:
 		newVars := make(map[string]any, len(vars)+2)
@@ -121,10 +128,10 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 		var body *parser.Node
 
 		if len(n.Children) == 4 {
-			toLoop = access(n.Children[2], data, vars)
+			toLoop = access(n.Children[2], data, helpers, vars)
 			body = n.Children[3]
 		} else {
-			toLoop = access(n.Children[1], data, vars)
+			toLoop = access(n.Children[1], data, helpers, vars)
 			body = n.Children[2]
 		}
 
@@ -136,7 +143,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 				newVars[iteratorName] = i
 				newVars[valueName] = v.Index(i).Interface()
 
-				eval(body, escapeFunc, out, data, newVars)
+				eval(body, escapeFunc, out, data, helpers, newVars)
 			}
 		case reflect.Map:
 			sorted := mapsort.Sort(v)
@@ -145,7 +152,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 				newVars[iteratorName] = sorted.Keys[i].Interface()
 				newVars[valueName] = sorted.Values[i].Interface()
 
-				eval(body, escapeFunc, out, data, newVars)
+				eval(body, escapeFunc, out, data, helpers, newVars)
 			}
 		default:
 			panic(fmt.Sprintf("attempted to range over %s", v.Kind()))
@@ -155,10 +162,18 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 	}
 }
 
-func access(n *parser.Node, data map[string]any, vars map[string]any) any {
+func access(n *parser.Node, data map[string]any, helpers map[string]any, vars map[string]any) any {
 	switch n.Kind {
+	case parser.KindCall:
+		toCall := reflect.ValueOf(access(n.Children[0], data, helpers, vars))
+		args := make([]reflect.Value, 0, len(n.Children)-1)
+		for _, arg := range n.Children[1:] {
+			args = append(args, reflect.ValueOf(access(arg, data, helpers, vars)))
+		}
+
+		return toCall.Call(args)[0].Interface()
 	case parser.KindNegate:
-		value := access(n.Children[0], data, vars)
+		value := access(n.Children[0], data, helpers, vars)
 		switch reflect.ValueOf(value).Kind() {
 		case reflect.Int:
 			return value.(int) * -1
@@ -189,8 +204,8 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 		val, _ := strconv.Atoi(n.Value)
 		return val
 	case parser.KindInfix:
-		left := access(n.Children[0], data, vars)
-		right := access(n.Children[2], data, vars)
+		left := access(n.Children[0], data, helpers, vars)
+		right := access(n.Children[2], data, helpers, vars)
 
 		switch n.Children[1].Value {
 		case "!=":
@@ -212,11 +227,19 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 		}
 
 	case parser.KindIdentifier:
-		return data[n.Value]
+		if val, ok := data[n.Value]; ok {
+			return val
+		}
+
+		if val, ok := helpers[n.Value]; ok {
+			return val
+		}
+
+		return nil
 	case parser.KindVariable:
 		return vars[n.Value]
 	case parser.KindAccess:
-		root := access(n.Children[0], data, vars)
+		root := access(n.Children[0], data, helpers, vars)
 		propName := n.Children[1].Value
 
 		if root == nil {
@@ -233,8 +256,17 @@ func access(n *parser.Node, data map[string]any, vars map[string]any) any {
 
 		switch k {
 		case reflect.Struct:
-			value := reflect.Indirect(v).FieldByName(propName)
-			return value.Interface()
+			// Support field access
+			if value := reflect.Indirect(v).FieldByName(propName); !reflect.ValueOf(value).IsZero() {
+				return value.Interface()
+			}
+
+			// Support method access
+			if value := reflect.Indirect(v).MethodByName(propName); !reflect.ValueOf(value).IsZero() {
+				return value.Interface()
+			}
+
+			return nil
 		case reflect.Map:
 			value := v.MapIndex(reflect.ValueOf(propName))
 			return value.Interface()

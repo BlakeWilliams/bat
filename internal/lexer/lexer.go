@@ -171,6 +171,14 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindComma)
 		return lexAction
+	case r == '(':
+		l.next()
+		l.emit(KindOpenParen)
+		return lexAction
+	case r == ')':
+		l.next()
+		l.emit(KindCloseParen)
+		return lexAction
 	case r == '$':
 		l.next()
 		return lexVariable

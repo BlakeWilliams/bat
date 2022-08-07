@@ -2,6 +2,7 @@ package bat
 
 import (
 	"bytes"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,9 +23,17 @@ type user struct {
 	Name name
 }
 
+func (u user) GetName() name {
+	return u.Name
+}
+
 type name struct {
 	First string
 	Last  string
+}
+
+func (n name) Initials() string {
+	return n.First[0:1] + n.Last[0:1]
 }
 
 func TestTemplateDots(t *testing.T) {
@@ -367,5 +376,59 @@ func TestTemplate_Stringer(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := "foo"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_Call(t *testing.T) {
+	f := func() string { return "omg" }
+	template, err := NewTemplate(`{{foo()}}`, WithEscapeFunc(HTMLEscape), WithHelpers(map[string]any{"foo": f}))
+
+	require.NoError(t, err)
+	data := map[string]any{"userInput": &stringerStruct{value: "foo"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "omg"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_CallArgs(t *testing.T) {
+	f := func(i int) string { return "you are number " + strconv.Itoa(i) }
+	template, err := NewTemplate(`{{foo(1)}}`, WithEscapeFunc(HTMLEscape), WithHelpers(map[string]any{"foo": f}))
+
+	require.NoError(t, err)
+	data := map[string]any{}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "you are number 1"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_CallChain(t *testing.T) {
+	template, err := NewTemplate(`{{user.Name.Initials()}}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{"user": user{Name: name{First: "Fox", Last: "Mulder"}}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "FM"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_CallNestedChain(t *testing.T) {
+	template, err := NewTemplate(`{{user.GetName().Initials()}}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{"user": user{Name: name{First: "Fox", Last: "Mulder"}}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "FM"
 	require.Equal(t, expected, b.String())
 }
