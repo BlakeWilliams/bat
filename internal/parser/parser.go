@@ -140,8 +140,10 @@ func parseMany(p *parser) []*Node {
 
 			// parse everything between {{ and }}
 			node := &Node{Kind: KindStatement, StartLine: token.StartLine, EndLine: token.EndLine}
-			node.Children = parseStatement(p)
+			node.Children = []*Node{parseStatement(p)}
 			nodes = append(nodes, node)
+			p.skipWhitespace()
+			p.expect(lexer.KindRightDelim)
 		case lexer.KindElse:
 			return nodes
 		case lexer.KindEnd:
@@ -153,36 +155,30 @@ func parseMany(p *parser) []*Node {
 }
 
 // Statements represent everything in a `{{...}}` block.
-func parseStatement(p *parser) []*Node {
-	nodes := make([]*Node, 0)
+func parseStatement(p *parser) *Node {
 	p.skipWhitespace()
 
-	for {
-		switch p.peek().Kind {
-		case lexer.KindRightDelim:
-			p.next()
-			return nodes
-		case lexer.KindEOF:
-			panic("unexpected EOF")
-		case lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
-			node := parseExpression(p)
-			nodes = append(nodes, node)
-		case lexer.KindNil:
-			token := p.next()
-			node := &Node{Kind: KindNil, StartLine: token.StartLine, EndLine: token.EndLine}
-			nodes = append(nodes, node)
-		case lexer.KindSpace:
-			p.skipWhitespace()
-		case lexer.KindIf:
-			node := parseIf(p)
-			nodes = append(nodes, node)
-		case lexer.KindRange:
-			node := parseRange(p)
-			nodes = append(nodes, node)
-		default:
-			p.errorWithLoc("unexpected token %v", p.peek().Value)
-		}
+	switch p.peek().Kind {
+	case lexer.KindRightDelim:
+		p.next()
+	case lexer.KindEOF:
+		panic("unexpected EOF")
+	case lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
+		return parseExpression(p)
+	case lexer.KindNil:
+		token := p.next()
+		return &Node{Kind: KindNil, StartLine: token.StartLine, EndLine: token.EndLine}
+	case lexer.KindSpace:
+		p.skipWhitespace()
+		return nil
+	case lexer.KindIf:
+		return parseIf(p)
+	case lexer.KindRange:
+		return parseRange(p)
+	default:
+		p.errorWithLoc("unexpected token %v", p.peek().Value)
 	}
+	return nil
 }
 
 func (p *parser) errorWithLoc(msg string, formatting ...any) {
