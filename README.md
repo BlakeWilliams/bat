@@ -35,6 +35,55 @@ expressions:
 - strings - `"string value"` and `"string with \"escaped\" values"`
 - integers - `1000` and `-1000`
 
+### Data Access
+
+Templates accept data in the form of `map[string]any`. The strings must be
+valid identifiers in order to be access, which start with an alphabetical
+character following by any number of alphanumerical characters.
+
+The template `{{userName}}` would attempt to access the `userName` key from the
+provided data map.
+
+e.g.
+
+```go
+t := bat.NewTemplate(`{{userName}}!`)
+out := new(bytes.Buffer)
+
+// outputs "gogopher!"
+t.Execute(out, map[string]{"Username": "gogopher"}
+```
+
+Chaining and method calls are also supported:
+
+```
+type Name struct {
+    First string
+    Last string
+}
+
+type User struct {
+    Name Name
+}
+
+func (n Name) Initials() string {
+    return n.First[0:1] + n.Last[0:1]
+}
+
+t := bat.NewTemplate(`{{user.Name.Initials()}}!`)
+out := new(bytes.Buffer)
+
+user := User{
+    Name: Name{
+        First: "Fox",
+        Last: "Mulder",
+    }
+}
+
+// outputs "FM!"
+t.Execute(out, map[string]{"user": user}
+```
+
 ### Conditionals
 
 Bat supports `if` statements, and the `!=` and `==` operators.
@@ -85,7 +134,29 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
     <h1>Hello person 1</h1>
 ```
 
-If a map is passed to `range`, it will attempt to sort it before iteration if the key is able to be compared and is implemented in the `internal/mapsort` package.
+If a map is passed to `range`, it will attempt to sort it before iteration if
+the key is able to be compared and is implemented in the `internal/mapsort`
+package.
+
+### Helper functions
+
+Helper functions can be provided directly to templates using the `WithHelpers` function when instantiating a template.
+
+e.g.
+
+```
+helloHelper := func(name string) string {
+    return fmt.Sprintf("Hello %s!", name)
+}
+
+t := bat.NewTemplate(`{{hello "there"}}`, WithHelpers(map[string]any{"hello": helloHelper}))
+
+// output "Hello there!"
+out := new(bytes.Buffer)
+t.Execute(out, map[string]any{})
+```
+
+### Escaping
 
 ### Math
 
@@ -124,7 +195,8 @@ implementation.
 - [ ] Improve stringify logic in the executor (`bat.go`)
 - [ ] Support channels in `range`
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
-- [ ] Support method calls
+- [x] Support method calls
+- [x] Support helpers
 
 ## Maybe
 
