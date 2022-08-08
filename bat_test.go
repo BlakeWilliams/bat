@@ -445,3 +445,19 @@ func TestTemplate_Hash(t *testing.T) {
 	expected := "map[bar:&lt;nil&gt; foo:&lt;nil&gt;]"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_CallHash(t *testing.T) {
+	lenHelper := func(m map[string]any) int {
+		return len(m)
+	}
+	template, err := NewTemplate(`{{len({foo: 1, bar: 2})}}`, WithEscapeFunc(HTMLEscape), WithHelpers(map[string]any{"len": lenHelper}))
+
+	require.NoError(t, err)
+	data := map[string]any{}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "2"
+	require.Equal(t, expected, b.String())
+}

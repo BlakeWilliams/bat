@@ -197,7 +197,13 @@ func (p *parser) errorWithLoc(msg string, formatting ...any) {
 // foo.bar.baz
 // foo != nil
 func parseExpression(p *parser) *Node {
-	root := parseLiteralOrAccess(p)
+	var root *Node
+	if p.peek().Kind == lexer.KindOpenCurly {
+		p.expect(lexer.KindOpenCurly)
+		root = parseMap(p)
+	} else {
+		root = parseLiteralOrAccess(p)
+	}
 
 	// check for ==, -, !=,
 	// protect against foo -1 vs foo - 1 and foo != bar vs foo !bar
