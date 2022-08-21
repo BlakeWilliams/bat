@@ -232,6 +232,7 @@ implementation.
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
 - [x] Support method calls
 - [x] Support helpers
+- [ ] Support map/slice array access `[]`
 
 ## Maybe
 
