@@ -37,6 +37,8 @@ const (
 	KindOpenCurly
 	KindCloseCurly
 	KindColon
+	KindOpenBracket
+	KindCloseBracket
 )
 
 type Token struct {

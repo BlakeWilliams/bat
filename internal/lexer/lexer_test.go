@@ -368,4 +368,24 @@ func TestLex_Curly(t *testing.T) {
 	require.Equal(t, l.Tokens[4].Kind, KindColon)
 	require.Equal(t, l.Tokens[5].Kind, KindSpace)
 	require.Equal(t, l.Tokens[6].Kind, KindNumber)
+	require.Equal(t, l.Tokens[7].Kind, KindCloseCurly)
+}
+
+func TestLex_Bracket(t *testing.T) {
+	input := `{{ {foo: 1}["foo"] }}`
+	l := Lexer{input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 14)
+
+	require.Equal(t, l.Tokens[1].Kind, KindSpace)
+	require.Equal(t, l.Tokens[2].Kind, KindOpenCurly)
+	require.Equal(t, l.Tokens[3].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[4].Kind, KindColon)
+	require.Equal(t, l.Tokens[5].Kind, KindSpace)
+	require.Equal(t, l.Tokens[6].Kind, KindNumber)
+	require.Equal(t, l.Tokens[7].Kind, KindCloseCurly)
+	require.Equal(t, l.Tokens[8].Kind, KindOpenBracket)
+	require.Equal(t, l.Tokens[9].Kind, KindString)
+	require.Equal(t, l.Tokens[10].Kind, KindCloseBracket)
 }

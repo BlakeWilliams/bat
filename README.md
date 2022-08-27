@@ -56,7 +56,7 @@ t.Execute(out, map[string]{"Username": "gogopher"}
 
 Chaining and method calls are also supported:
 
-```
+```go
 type Name struct {
     First string
     Last string
@@ -114,7 +114,7 @@ Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resu
     <h1>Hello Dana Scully, number 1</h1>
 ```
 
-In the example above, range defines two variables which __must__ begin with a $
+In the example above, range defines two variables which **must** begin with a $
 so they don't conflict with `data` passed into the template.
 
 The `range` keyword can also be used with a single variable, providing only the
@@ -180,7 +180,7 @@ Escaping can be avoided by returning the `bat.Safe` type from the result of a
 
 e.g.
 
-```
+```go
 t := bat.NewTemplate(`{{output}}`, WithEscapeFunc(HTMLEscape))
 
 // output "Hello there!"
@@ -198,7 +198,7 @@ t.Execute(out, map[string]any{"output": bat.Safe("<h1>Hello!</h1>")})
 Basic math is supported, with some caveats. When performing math operations,
 the left most type is converted into the right most type, when possible:
 
-```
+```go
 // int32 - int64
    100   -   200 // returns int64
 ```
@@ -226,13 +226,13 @@ implementation.
 - [x] Support strings in templates
 - [x] Support integer numbers
 - [x] Add basic math operations
-- [ ] Simple map class `{ "foo": bar }` for use with partials
+- [x] Simple map class `{ "foo": bar }` for use with partials
 - [ ] Improve stringify logic in the executor (`bat.go`)
 - [ ] Support channels in `range`
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
 - [x] Support method calls
 - [x] Support helpers
-- [ ] Support map/slice array access `[]`
+- [x] Support map/slice array access `[]`
 
 ## Maybe
 

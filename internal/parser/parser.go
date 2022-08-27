@@ -40,11 +40,12 @@ const (
 	KindString     = "string"
 	KindInt        = "int"
 	// Represents blocks of top-level items for use in if/else, range body, etc.
-	KindBlock  = "block"
-	KindNegate = "negate"
-	KindCall   = "call"
-	KindMap    = "map"
-	KindPair   = "pair"
+	KindBlock         = "block"
+	KindNegate        = "negate"
+	KindCall          = "call"
+	KindMap           = "map"
+	KindPair          = "pair"
+	KindBracketAccess = "bracket_access"
 )
 
 func (n *Node) String() string {
@@ -165,11 +166,8 @@ func parseStatement(p *parser) *Node {
 		p.next()
 	case lexer.KindEOF:
 		panic("unexpected EOF")
-	case lexer.KindOpenCurly:
-		p.next()
-		return parseMap(p)
-	case lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
-		return parseExpression(p)
+	case lexer.KindOpenCurly, lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
+		return parseExpression(p, true)
 	case lexer.KindNil:
 		token := p.next()
 		return &Node{Kind: KindNil, StartLine: token.StartLine, EndLine: token.EndLine}
@@ -196,13 +194,83 @@ func (p *parser) errorWithLoc(msg string, formatting ...any) {
 // parses expressions, like:
 // foo.bar.baz
 // foo != nil
-func parseExpression(p *parser) *Node {
-	var root *Node
+func parseExpression(p *parser, allowOperator bool) *Node {
+	var rootNode *Node
 	if p.peek().Kind == lexer.KindOpenCurly {
 		p.expect(lexer.KindOpenCurly)
-		root = parseMap(p)
+		rootNode = parseMap(p)
 	} else {
-		root = parseLiteralOrAccess(p)
+		rootNode = parseLiteralOrAccess(p)
+	}
+
+	p.skipWhitespace()
+
+	if p.peek().Kind == lexer.KindDot || p.peek().Kind == lexer.KindOpenParen || p.peek().Kind == lexer.KindOpenBracket {
+		node := rootNode
+
+	loop:
+		for {
+			switch p.peek().Kind {
+			case lexer.KindDot:
+				p.expect(lexer.KindDot)
+				childNode := parseVariable(p)
+
+				newNode := &Node{
+					Kind:      KindAccess,
+					Children:  []*Node{node, childNode},
+					StartLine: childNode.StartLine,
+					EndLine:   childNode.EndLine,
+				}
+
+				node = newNode
+			case lexer.KindOpenBracket:
+				p.expect(lexer.KindOpenBracket)
+
+				newNode := &Node{
+					Kind:      KindBracketAccess,
+					Children:  []*Node{node},
+					StartLine: rootNode.StartLine,
+				}
+
+				child := parseExpression(p, true)
+				newNode.Children = append(newNode.Children, child)
+				p.expect(lexer.KindCloseBracket)
+
+				node = newNode
+			case lexer.KindOpenParen:
+				p.expect(lexer.KindOpenParen)
+				newNode := &Node{
+					Kind:      KindCall,
+					Children:  []*Node{node},
+					StartLine: rootNode.StartLine,
+				}
+
+				for {
+					p.skipWhitespace()
+					if p.peek().Kind == lexer.KindCloseParen {
+						break
+					}
+
+					newNode.Children = append(newNode.Children, parseExpression(p, true))
+
+					if p.peek().Kind == lexer.KindComma {
+						p.expect(lexer.KindComma)
+					}
+				}
+
+				p.expect(lexer.KindCloseParen)
+
+				node = newNode
+			default:
+				break loop
+			}
+		}
+
+		return node
+	}
+
+	if !allowOperator {
+		return rootNode
 	}
 
 	// check for ==, -, !=,
@@ -211,16 +279,16 @@ func parseExpression(p *parser) *Node {
 	switch next.Kind {
 	case lexer.KindMinus:
 		if p.peekn(2).Kind != lexer.KindSpace {
-			return root
+			return rootNode
 		}
 	case lexer.KindBang:
 		if p.peekn(2).Kind != lexer.KindEqual {
-			return root
+			return rootNode
 		}
 	case lexer.KindEqual, lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent:
 		// do nothing, fall through to parse operator
 	default:
-		return root
+		return rootNode
 	}
 
 	operator := parseOperator(p)
@@ -229,13 +297,18 @@ func parseExpression(p *parser) *Node {
 	node := &Node{
 		Kind:      KindInfix,
 		Children:  []*Node{},
-		StartLine: root.StartLine,
+		StartLine: rootNode.StartLine,
 		EndLine:   p.peek().EndLine,
 	}
 
-	node.Children = append(node.Children, root)
+	node.Children = append(node.Children, rootNode)
 	node.Children = append(node.Children, operator)
-	node.Children = append(node.Children, parseLiteralOrAccess(p))
+	right := parseExpression(p, false)
+
+	if right.Kind == KindInfix {
+		panic("infix operator cannot follow infix operator")
+	}
+	node.Children = append(node.Children, right)
 
 	return node
 }
@@ -273,7 +346,7 @@ func parseLiteralOrAccess(p *parser) *Node {
 				Kind:      KindNegate,
 				StartLine: p.peek().StartLine,
 				EndLine:   p.peek().EndLine,
-				Children:  []*Node{parseVariableChain(p)},
+				Children:  []*Node{parseExpression(p, true)},
 			}
 		default:
 			panic(fmt.Sprintf("Unexpected token `-` on line %d", p.peek().StartLine))
@@ -281,7 +354,7 @@ func parseLiteralOrAccess(p *parser) *Node {
 	case lexer.KindNumber:
 		kind = KindInt
 	case lexer.KindVariable, lexer.KindIdentifier:
-		return parseVariableChain(p)
+		return parseVariable(p)
 	default:
 		panic(fmt.Sprintf("Unexpected identifier %s", p.peek().Kind.String()))
 	}
@@ -323,66 +396,6 @@ func parseVariable(p *parser) *Node {
 	return rootNode
 }
 
-func parseVariableChain(p *parser) *Node {
-	rootNode := parseVariable(p)
-
-	p.skipWhitespace()
-
-	if p.peek().Kind == lexer.KindDot || p.peek().Kind == lexer.KindOpenParen {
-		node := rootNode
-
-	loop:
-		for {
-			switch p.peek().Kind {
-			case lexer.KindDot:
-				p.expect(lexer.KindDot)
-				childNode := parseVariable(p)
-
-				newNode := &Node{
-					Kind:      KindAccess,
-					Children:  []*Node{node, childNode},
-					StartLine: childNode.StartLine,
-					EndLine:   childNode.EndLine,
-				}
-
-				node = newNode
-			case lexer.KindOpenParen:
-				p.expect(lexer.KindOpenParen)
-				newNode := &Node{
-					Kind:      KindCall,
-					Children:  []*Node{node},
-					StartLine: rootNode.StartLine,
-				}
-
-				for {
-					p.skipWhitespace()
-					if p.peek().Kind == lexer.KindCloseParen {
-						break
-					}
-
-					newNode.Children = append(newNode.Children, parseExpression(p))
-
-					if p.peek().Kind == lexer.KindComma {
-						p.expect(lexer.KindComma)
-					}
-				}
-
-				p.expect(lexer.KindCloseParen)
-
-				node = newNode
-			default:
-				break loop
-			}
-		}
-
-		return node
-	}
-
-	p.skipWhitespace()
-
-	return rootNode
-}
-
 func (p *parser) expect(kind lexer.Kind) lexer.Token {
 	n := p.next()
 
@@ -405,7 +418,7 @@ func parseIf(p *parser) *Node {
 	p.skipWhitespace()
 
 	// TODO validate this returns a KindInfix, or KindNot
-	node.Children = append(node.Children, parseExpression(p))
+	node.Children = append(node.Children, parseExpression(p, true))
 	p.skipWhitespace()
 	p.expect(lexer.KindRightDelim)
 
@@ -482,7 +495,7 @@ func parseRange(p *parser) *Node {
 	p.expect(lexer.KindIn)
 	p.skipWhitespace()
 
-	node.Children = append(node.Children, parseVariableChain(p))
+	node.Children = append(node.Children, parseExpression(p, true))
 	p.expect(lexer.KindRightDelim)
 	node.Children = append(node.Children, parseBlock(p))
 	p.skipWhitespace()

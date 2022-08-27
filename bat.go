@@ -95,7 +95,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 		out.Write([]byte(n.Value))
 	case parser.KindStatement:
 		eval(n.Children[0], escapeFunc, out, data, helpers, vars)
-	case parser.KindAccess, parser.KindNegate:
+	case parser.KindAccess, parser.KindNegate, parser.KindBracketAccess:
 		value := access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
@@ -243,12 +243,33 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 
 		for _, child := range n.Children {
 			key := child.Children[0]
-			value := child.Children[0]
+			value := child.Children[1]
 
-			m[key.Value] = access(value, data, helpers, vars)
+			m[key.Value] = reflect.ValueOf(access(value, data, helpers, vars)).Interface()
 		}
 
 		return m
+	case parser.KindBracketAccess:
+		root := access(n.Children[0], data, helpers, vars)
+		accessor := access(n.Children[1], data, helpers, vars)
+
+		rootVal := reflect.ValueOf(root)
+		accessorVal := reflect.ValueOf(accessor)
+
+		switch rootVal.Kind() {
+		case reflect.Map:
+			fmt.Println(rootVal)
+			return rootVal.MapIndex(reflect.ValueOf(accessor)).Interface()
+		case reflect.Slice, reflect.Array:
+			switch accessorVal.Kind() {
+			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				return rootVal.Index(accessor.(int)).Interface()
+			default:
+				panic(fmt.Sprintf("can't index %s with %s", rootVal.Kind(), accessorVal.Kind()))
+			}
+		default:
+			panic("cannot index non-map or non-slice")
+		}
 	case parser.KindAccess:
 		root := access(n.Children[0], data, helpers, vars)
 		propName := n.Children[1].Value

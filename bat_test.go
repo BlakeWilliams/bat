@@ -442,7 +442,7 @@ func TestTemplate_Hash(t *testing.T) {
 	err = template.Execute(b, data)
 	require.NoError(t, err)
 
-	expected := "map[bar:&lt;nil&gt; foo:&lt;nil&gt;]"
+	expected := "map[bar:2 foo:1]"
 	require.Equal(t, expected, b.String())
 }
 
@@ -459,5 +459,18 @@ func TestTemplate_CallHash(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := "2"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_BracketAccess(t *testing.T) {
+	template, err := NewTemplate(`{{ {foo: 1, bar: 2}["foo"] }}`, WithEscapeFunc(HTMLEscape))
+
+	require.NoError(t, err)
+	data := map[string]any{}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := "1"
 	require.Equal(t, expected, b.String())
 }
