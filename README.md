@@ -34,6 +34,7 @@ expressions:
 - nil - `nil`
 - strings - `"string value"` and `"string with \"escaped\" values"`
 - integers - `1000` and `-1000`
+- maps - `{ foo: 1, bar: "two" }`
 
 ### Data Access
 
@@ -84,15 +85,21 @@ user := User{
 t.Execute(out, map[string]{"user": user}
 ```
 
+Finally, map/slice/array access is supported via `[]`:
+
+```html
+<h1>{{user[0].Name.First}}</h1>
+```
+
 ### Conditionals
 
 Bat supports `if` statements, and the `!=` and `==` operators.
 
 ```html
 {{if user != nil}}
-    <a href="/login">Login</a>
+<a href="/login">Login</a>
 {{else}}
-    <a href="/profile">View your profile</a>
+<a href="/profile">View your profile</a>
 {{end}}
 ```
 
@@ -102,16 +109,16 @@ Iteration is supported via the `range` keyword. Both slices and maps are support
 
 ```html
 {{range $index, $name in data}}
-    <h1>Hello {{$name}}, number {{$index}}</h1>
+<h1>Hello {{$name}}, number {{$index}}</h1>
 {{end}}
 ```
 
 Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resulting output would look like:
 
 ```html
-    <h1>Hello Fox Mulder, number 0</h1>
+<h1>Hello Fox Mulder, number 0</h1>
 
-    <h1>Hello Dana Scully, number 1</h1>
+<h1>Hello Dana Scully, number 1</h1>
 ```
 
 In the example above, range defines two variables which **must** begin with a $
@@ -122,16 +129,16 @@ key or index to the iterator:
 
 ```html
 {{range $index in data}}
-    <h1>Hello person {{$index}}</h1>
+<h1>Hello person {{$index}}</h1>
 {{end}}
 ```
 
 Given `data` being defined as: `[]string{"Fox Mulder", "Dana Scully"}`, the resulting output would look like:
 
 ```html
-    <h1>Hello person 0</h1>
+<h1>Hello person 0</h1>
 
-    <h1>Hello person 1</h1>
+<h1>Hello person 1</h1>
 ```
 
 If a map is passed to `range`, it will attempt to sort it before iteration if
