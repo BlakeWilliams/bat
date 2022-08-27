@@ -93,6 +93,8 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 	switch n.Kind {
 	case parser.KindText:
 		out.Write([]byte(n.Value))
+	case parser.KindString:
+		out.Write([]byte(n.Value)[1 : len(n.Value)-1])
 	case parser.KindStatement:
 		eval(n.Children[0], escapeFunc, out, data, helpers, vars)
 	case parser.KindAccess, parser.KindNegate, parser.KindBracketAccess:

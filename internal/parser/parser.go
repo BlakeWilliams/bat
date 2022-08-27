@@ -166,7 +166,7 @@ func parseStatement(p *parser) *Node {
 		p.next()
 	case lexer.KindEOF:
 		panic("unexpected EOF")
-	case lexer.KindOpenCurly, lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus:
+	case lexer.KindOpenCurly, lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus, lexer.KindString:
 		return parseExpression(p, true)
 	case lexer.KindNil:
 		token := p.next()
