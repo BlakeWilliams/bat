@@ -123,7 +123,11 @@ func (e *Engine) AutoRegister(dir fs.FS, extension string) error {
 			return fmt.Errorf("error reading file: %s", err)
 		}
 
-		e.Register(path, string(contents))
+		err = e.Register(path, string(contents))
+
+		if err != nil {
+			return fmt.Errorf("could not register template", err)
+		}
 		return nil
 	})
 
