@@ -49,7 +49,7 @@ func TestEngine_AutoRegister(t *testing.T) {
 func TestEngine_EscapesHTML(t *testing.T) {
 	engine := NewEngine(HTMLEscape)
 
-	err := engine.Register("foo", "{{<h1>hi</h1>\"}}")
+	err := engine.Register("foo", "{{\"<h1>hi</h1>\"}}")
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
