@@ -23,9 +23,32 @@ t := team{
 bat.Execute(map[string]any{"Team": team})
 ```
 
+### Engine
+
+Bat provides an engine that allows you to register templates and provides
+default, as well as user provided helper functions to those templates.
+
+```go
+engine := bat.NewEngine(bat.HTMLEscape)
+engine.Register("index.bat", "<h1>Hello {{Team.Name}}</h1>")
+```
+
+or, you can use `AutoRegister` to automatically register all templates in a
+directory. This is useful with the Go embed package:
+
+```go
+//go:embed templates
+var templates embed.FS
+
+engine := bat.NewEngine(bat.HTMLEscape)
+engine.AutoRegister(templates, ".html")
+
+engine.Render("templates/users/signup.html", map[string]any{"Team": team})
+```
+
 Here's an overview of more advanced usage:
 
-### Primitives:
+### Primitives
 
 Bat supports the following primitives that can be used within `{{}}`
 expressions:
