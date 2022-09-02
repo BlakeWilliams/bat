@@ -114,6 +114,42 @@ func TestParse_Range(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_Not(t *testing.T) {
+	l := lexer.Lex("{{!foo}}")
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindNot, "", []*Node{
+				n(KindIdentifier, "foo", nil),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
+func TestParse_NotWithOperator(t *testing.T) {
+	l := lexer.Lex("{{!foo == true}}")
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindInfix, "", []*Node{
+				n(KindNot, "", []*Node{
+					n(KindIdentifier, "foo", nil),
+				}),
+				n(KindOperator, "==", nil),
+				n(KindTrue, "true", nil),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func TestParse_BrokenNestedIf(t *testing.T) {
 	l := lexer.Lex("{{if name != nil != bar}}{{end}}")
 	_, err := Parse(l)

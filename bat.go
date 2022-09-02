@@ -71,7 +71,7 @@ func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 	}()
 
 	for _, child := range t.ast.Children {
-		t.eval(child, t.escapeFunc, out, data, t.helpers, make(map[string]any))
+		t.eval(child, out, data, t.helpers, make(map[string]any))
 	}
 
 	return nil
@@ -91,33 +91,36 @@ func WithHelpers(fns map[string]any) TemplateOption {
 	}
 }
 
-func (t *Template) eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, helpers map[string]any, vars map[string]any) {
+func (t *Template) eval(n *parser.Node, out io.Writer, data map[string]any, helpers map[string]any, vars map[string]any) {
 	switch n.Kind {
 	case parser.KindText:
 		out.Write([]byte(n.Value))
+	case parser.KindNot:
+		value := t.access(n, data, helpers, vars)
+		out.Write([]byte(valueToString(value, t.escapeFunc)))
 	case parser.KindString:
 		out.Write([]byte(n.Value)[1 : len(n.Value)-1])
 	case parser.KindStatement:
-		t.eval(n.Children[0], escapeFunc, out, data, helpers, vars)
+		t.eval(n.Children[0], out, data, helpers, vars)
 	case parser.KindAccess, parser.KindNegate, parser.KindBracketAccess:
 		value := t.access(n, data, helpers, vars)
 
-		out.Write([]byte(valueToString(value, escapeFunc)))
+		out.Write([]byte(valueToString(value, t.escapeFunc)))
 	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix, parser.KindCall, parser.KindMap:
 		value := t.access(n, data, helpers, vars)
 
-		out.Write([]byte(valueToString(value, escapeFunc)))
+		out.Write([]byte(valueToString(value, t.escapeFunc)))
 	case parser.KindIf:
 		conditionResult := t.access(n.Children[0], data, helpers, vars)
 
 		if conditionResult != nil && conditionResult != false {
-			t.eval(n.Children[1], escapeFunc, out, data, helpers, vars)
+			t.eval(n.Children[1], out, data, helpers, vars)
 		} else if len(n.Children) > 2 && n.Children[2] != nil {
-			t.eval(n.Children[2], escapeFunc, out, data, helpers, vars)
+			t.eval(n.Children[2], out, data, helpers, vars)
 		}
 	case parser.KindBlock:
 		for _, child := range n.Children {
-			t.eval(child, escapeFunc, out, data, helpers, vars)
+			t.eval(child, out, data, helpers, vars)
 		}
 	case parser.KindRange:
 		newVars := make(map[string]any, len(vars)+2)
@@ -147,7 +150,7 @@ func (t *Template) eval(n *parser.Node, escapeFunc func(string) string, out io.W
 				newVars[iteratorName] = i
 				newVars[valueName] = v.Index(i).Interface()
 
-				t.eval(body, escapeFunc, out, data, helpers, newVars)
+				t.eval(body, out, data, helpers, newVars)
 			}
 		case reflect.Map:
 			sorted := mapsort.Sort(v)
@@ -156,7 +159,7 @@ func (t *Template) eval(n *parser.Node, escapeFunc func(string) string, out io.W
 				newVars[iteratorName] = sorted.Keys[i].Interface()
 				newVars[valueName] = sorted.Values[i].Interface()
 
-				t.eval(body, escapeFunc, out, data, helpers, newVars)
+				t.eval(body, out, data, helpers, newVars)
 			}
 		default:
 			t.panicWithTrace(n, fmt.Sprintf("attempted to range over %s", v.Kind()))
@@ -198,6 +201,14 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 		default:
 			t.panicWithTrace(n, fmt.Sprintf("can't negate type %s", reflect.ValueOf(value).Kind()))
 			return nil
+		}
+	case parser.KindNot:
+		value := t.access(n.Children[0], data, helpers, vars)
+
+		if value == nil || value == false {
+			return true
+		} else {
+			return false
 		}
 	case parser.KindTrue:
 		return true

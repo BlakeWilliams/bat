@@ -208,8 +208,10 @@ func lexAction(l *Lexer) stateFn {
 	case unicode.IsNumber(r):
 		return lexNumber
 	default:
+		lines := strings.Split(l.input, "\n")
+
 		l.emitError(
-			fmt.Sprintf("unexpected token %s on line %d", string(l.peek()), l.Line),
+			fmt.Sprintf("unexpected token %s on line %d:\n%s", string(l.peek()), l.Line, lines[l.Line-1]),
 		)
 		return nil
 	}

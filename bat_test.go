@@ -508,3 +508,27 @@ func TestTemplate_Nil(t *testing.T) {
 	expected := ""
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_NotFalsy(t *testing.T) {
+	template, err := NewTemplate(`{{ !value }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"value": false})
+	require.NoError(t, err)
+
+	expected := "true"
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_NotTruthy(t *testing.T) {
+	template, err := NewTemplate(`{{ !value }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"value": true})
+	require.NoError(t, err)
+
+	expected := "false"
+	require.Equal(t, expected, b.String())
+}

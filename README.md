@@ -126,6 +126,16 @@ Bat supports `if` statements, and the `!=` and `==` operators.
 {{end}}
 ```
 
+### Not
+
+The `!` operator can be used to negate an expression and return a boolean
+
+```html
+{{!true}}
+```
+
+The above will render `false`.
+
 ### Iterators
 
 Iteration is supported via the `range` keyword. Both slices and maps are supported.
@@ -249,8 +259,9 @@ implementation.
 
 - [x] Add `each` functionality (see the section on `range`)
 - [x] Add `if` and `else` functionality
-- [ ] Emit better error messages and validate them with tests
-- [ ] Create an engine struct that will enable partials, helper functions, and
+- [x] Emit better error messages and validate them with tests (template execution)
+- [ ] Emit better error messages from lexer and parser
+- [x] Create an engine struct that will enable partials, helper functions, and
       custom escaping functions.
 - [x] Add escaping support to templates
 - [x] Support strings in templates

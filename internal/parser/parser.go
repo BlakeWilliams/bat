@@ -46,6 +46,7 @@ const (
 	KindMap           = "map"
 	KindPair          = "pair"
 	KindBracketAccess = "bracket_access"
+	KindNot           = "not"
 )
 
 func (n *Node) String() string {
@@ -166,7 +167,7 @@ func parseStatement(p *parser) *Node {
 		p.next()
 	case lexer.KindEOF:
 		panic("unexpected EOF")
-	case lexer.KindOpenCurly, lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus, lexer.KindString:
+	case lexer.KindOpenCurly, lexer.KindIdentifier, lexer.KindVariable, lexer.KindNumber, lexer.KindMinus, lexer.KindString, lexer.KindBang:
 		return parseExpression(p, true)
 	case lexer.KindNil:
 		token := p.next()
@@ -196,6 +197,13 @@ func (p *parser) errorWithLoc(msg string, formatting ...any) {
 // foo != nil
 func parseExpression(p *parser, allowOperator bool) *Node {
 	var rootNode *Node
+
+	wrapInNot := false
+	if p.peek().Kind == lexer.KindBang {
+		p.expect(lexer.KindBang)
+		wrapInNot = true
+	}
+
 	if p.peek().Kind == lexer.KindOpenCurly {
 		p.expect(lexer.KindOpenCurly)
 		rootNode = parseMap(p)
@@ -267,6 +275,17 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 		}
 
 		return node
+	}
+
+	if wrapInNot {
+		newRoot := &Node{
+			Kind:      KindNot,
+			Children:  []*Node{rootNode},
+			StartLine: rootNode.StartLine,
+			EndLine:   rootNode.EndLine,
+		}
+
+		rootNode = newRoot
 	}
 
 	if !allowOperator {
