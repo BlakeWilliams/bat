@@ -9,7 +9,7 @@ import (
 
 type (
 	Lexer struct {
-		input     string
+		Input     string
 		start     int
 		pos       int
 		Tokens    []Token
@@ -30,7 +30,7 @@ const (
 )
 
 func Lex(input string) *Lexer {
-	l := &Lexer{input: input, Tokens: make([]Token, 0), StartLine: 1, Line: 1}
+	l := &Lexer{Input: input, Tokens: make([]Token, 0), StartLine: 1, Line: 1}
 	l.run()
 
 	return l
@@ -43,13 +43,13 @@ func (l *Lexer) run() {
 }
 
 func (l *Lexer) currentText() string {
-	return l.input[l.start:l.pos]
+	return l.Input[l.start:l.pos]
 }
 
 func (l *Lexer) emit(kind Kind) {
 	token := Token{
 		Kind:      kind,
-		Value:     l.input[l.start:l.pos],
+		Value:     l.Input[l.start:l.pos],
 		StartLine: l.StartLine,
 		EndLine:   l.Line,
 	}
@@ -65,11 +65,11 @@ func (l *Lexer) emitError(content string) {
 }
 
 func (l *Lexer) next() rune {
-	if l.pos >= len(l.input) {
+	if l.pos >= len(l.Input) {
 		return eof
 	}
 
-	r, width := utf8.DecodeRuneInString(l.input[l.pos:])
+	r, width := utf8.DecodeRuneInString(l.Input[l.pos:])
 	l.pos += width
 
 	if r == '\n' {
@@ -80,7 +80,7 @@ func (l *Lexer) next() rune {
 }
 
 func (l *Lexer) backup() {
-	r, width := utf8.DecodeLastRuneInString(l.input[:l.pos])
+	r, width := utf8.DecodeLastRuneInString(l.Input[:l.pos])
 
 	if r == '\n' {
 		l.Line -= 1
@@ -97,11 +97,11 @@ func (l *Lexer) peek() rune {
 }
 
 func lexText(l *Lexer) stateFn {
-	if index := strings.Index(l.input[l.start:], leftDelim); index >= 0 {
+	if index := strings.Index(l.Input[l.start:], leftDelim); index >= 0 {
 		if index > 0 {
 			l.pos = l.start + index
 
-			l.Line += strings.Count(l.input[l.start:l.pos], "\n")
+			l.Line += strings.Count(l.Input[l.start:l.pos], "\n")
 			l.emit(KindText)
 		}
 
@@ -109,8 +109,8 @@ func lexText(l *Lexer) stateFn {
 	}
 
 	// If there's remaining text, emit it
-	if l.start != len(l.input) {
-		l.pos = len(l.input)
+	if l.start != len(l.Input) {
+		l.pos = len(l.Input)
 		l.emit(KindText)
 	}
 
@@ -208,7 +208,7 @@ func lexAction(l *Lexer) stateFn {
 	case unicode.IsNumber(r):
 		return lexNumber
 	default:
-		lines := strings.Split(l.input, "\n")
+		lines := strings.Split(l.Input, "\n")
 
 		l.emitError(
 			fmt.Sprintf("unexpected token %s on line %d:\n%s", string(l.peek()), l.Line, lines[l.Line-1]),
@@ -218,7 +218,7 @@ func lexAction(l *Lexer) stateFn {
 }
 
 func lexRightDelim(l *Lexer) stateFn {
-	if !strings.HasPrefix(l.input[l.pos:], rightDelim) {
+	if !strings.HasPrefix(l.Input[l.pos:], rightDelim) {
 		l.next()
 		l.emit(KindCloseCurly)
 		return lexAction

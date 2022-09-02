@@ -8,7 +8,7 @@ import (
 
 func TestLexString(t *testing.T) {
 	input := "<h1>Hello\nWorld</h1>"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -21,7 +21,7 @@ func TestLexString(t *testing.T) {
 
 func TestLexBasicTemplate(t *testing.T) {
 	input := "<h1>Hello {{name}}</h1>"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -47,7 +47,7 @@ func TestLexBasicTemplate(t *testing.T) {
 
 func TestLexDots(t *testing.T) {
 	input := "{{foo.bar}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -73,7 +73,7 @@ func TestLexDots(t *testing.T) {
 
 func TestLexMultipleStatements(t *testing.T) {
 	input := "{{foo.bar}} {{bar.baz}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -114,7 +114,7 @@ func TestLexMultipleStatements(t *testing.T) {
 
 func TestLexHash(t *testing.T) {
 	input := "{{#each}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -137,7 +137,7 @@ func TestLexHash(t *testing.T) {
 
 func TestLexSpaces(t *testing.T) {
 	input := "{{   #each   }}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -200,7 +200,7 @@ func TestLex_Pos(t *testing.T) {
 
 func TestLex_If(t *testing.T) {
 	input := "{{if foo != nil}}1{{else}}2{{end}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -236,7 +236,7 @@ func TestLex_If(t *testing.T) {
 
 func TestLex_True(t *testing.T) {
 	input := "{{true}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -247,7 +247,7 @@ func TestLex_True(t *testing.T) {
 
 func TestLex_False(t *testing.T) {
 	input := "{{false}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 
@@ -258,7 +258,7 @@ func TestLex_False(t *testing.T) {
 
 func TestLex_Range(t *testing.T) {
 	input := "{{range $i, $bar in foo}}{{end}}"
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 16)
@@ -281,7 +281,7 @@ func TestLex_Range(t *testing.T) {
 
 func TestLex_String(t *testing.T) {
 	input := `{{"omg wow"}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 4)
@@ -293,7 +293,7 @@ func TestLex_String(t *testing.T) {
 
 func TestLex_EscapedString(t *testing.T) {
 	input := `{{"omg \"wow\""}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 4)
@@ -305,7 +305,7 @@ func TestLex_EscapedString(t *testing.T) {
 
 func TestLex_Ints(t *testing.T) {
 	input := `{{1000}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 4)
@@ -317,7 +317,7 @@ func TestLex_Ints(t *testing.T) {
 
 func TestLex_NegativeInts(t *testing.T) {
 	input := `{{-1000}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 5)
@@ -330,7 +330,7 @@ func TestLex_NegativeInts(t *testing.T) {
 
 func TestLex_Operators(t *testing.T) {
 	input := `{{+-*/%}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 8)
@@ -344,7 +344,7 @@ func TestLex_Operators(t *testing.T) {
 
 func TestLex_Parens(t *testing.T) {
 	input := `{{foo(1)}}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 7)
@@ -357,7 +357,7 @@ func TestLex_Parens(t *testing.T) {
 
 func TestLex_Curly(t *testing.T) {
 	input := `{{ {foo: 1} }}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 11)
@@ -373,7 +373,7 @@ func TestLex_Curly(t *testing.T) {
 
 func TestLex_Bracket(t *testing.T) {
 	input := `{{ {foo: 1}["foo"] }}`
-	l := Lexer{input: input, Tokens: make([]Token, 0)}
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
 
 	l.run()
 	require.Len(t, l.Tokens, 14)

@@ -419,10 +419,25 @@ func (p *parser) expect(kind lexer.Kind) lexer.Token {
 	n := p.next()
 
 	if n.Kind != kind {
-		panic(fmt.Sprintf("unexpected token %v, expected %s", n.Value, kind))
+		p.panicWithMessage(fmt.Sprintf("unexpected token '%v', expected '%s'", n.Value, kind))
 	}
 
 	return n
+}
+
+func (p *parser) panicWithMessage(msg string) {
+	token := p.lexer.Tokens[p.pos]
+	lines := strings.Split(p.lexer.Input, "\n")
+
+	start := token.StartLine
+	end := token.EndLine
+	if end == 0 {
+		end = start
+	}
+
+	fmt.Println()
+	message := fmt.Sprintf("error on line %d - %s:\n%s", token.StartLine, msg, strings.Join(lines[start-1:end], "\n"))
+	panic(message)
 }
 
 func parseIf(p *parser) *Node {
