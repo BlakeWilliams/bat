@@ -389,3 +389,15 @@ func TestLex_Bracket(t *testing.T) {
 	require.Equal(t, l.Tokens[9].Kind, KindString)
 	require.Equal(t, l.Tokens[10].Kind, KindCloseBracket)
 }
+
+func TestLex_EmptyBraces(t *testing.T) {
+	input := `{{ {} }}`
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 7)
+
+	require.Equal(t, l.Tokens[1].Kind, KindSpace)
+	require.Equal(t, l.Tokens[2].Kind, KindOpenCurly)
+	require.Equal(t, l.Tokens[3].Kind, KindCloseCurly)
+}

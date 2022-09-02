@@ -419,6 +419,20 @@ func TestParse_BracketAccess(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_EmptyMap(t *testing.T) {
+	l := lexer.Lex(`{{ {} }}`)
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindMap, "", []*Node{}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func n(kind string, value string, children []*Node) *Node {
 	return &Node{Kind: kind, Value: value, Children: children}
 }

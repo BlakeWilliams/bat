@@ -595,10 +595,10 @@ func parseMap(p *parser) *Node {
 	}
 
 	mapNode.Children = pairs
-	mapNode.EndLine = pairs[len(pairs)-1].EndLine
 
 	p.skipWhitespace()
-	p.expect(lexer.KindCloseCurly)
+	mapEnd := p.expect(lexer.KindCloseCurly)
+	mapNode.EndLine = mapEnd.EndLine
 
 	return mapNode
 }
