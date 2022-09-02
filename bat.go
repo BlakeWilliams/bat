@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/blakewilliams/bat/internal/lexer"
 	"github.com/blakewilliams/bat/internal/mapsort"
@@ -19,6 +20,7 @@ type Template struct {
 	ast        *parser.Node
 	helpers    map[string]any
 	escapeFunc func(string) string
+	raw        string
 }
 
 // An escapeFunc that returns text as-is
@@ -46,7 +48,7 @@ func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
 		return Template{}, fmt.Errorf("could not create template: %w", err)
 	}
 
-	t := Template{ast: ast, escapeFunc: HTMLEscape}
+	t := Template{raw: input, ast: ast, escapeFunc: HTMLEscape}
 	for _, opt := range opts {
 		opt(&t)
 	}
@@ -69,7 +71,7 @@ func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 	}()
 
 	for _, child := range t.ast.Children {
-		eval(child, t.escapeFunc, out, data, t.helpers, make(map[string]any))
+		t.eval(child, t.escapeFunc, out, data, t.helpers, make(map[string]any))
 	}
 
 	return nil
@@ -89,33 +91,33 @@ func WithHelpers(fns map[string]any) TemplateOption {
 	}
 }
 
-func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, helpers map[string]any, vars map[string]any) {
+func (t *Template) eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data map[string]any, helpers map[string]any, vars map[string]any) {
 	switch n.Kind {
 	case parser.KindText:
 		out.Write([]byte(n.Value))
 	case parser.KindString:
 		out.Write([]byte(n.Value)[1 : len(n.Value)-1])
 	case parser.KindStatement:
-		eval(n.Children[0], escapeFunc, out, data, helpers, vars)
+		t.eval(n.Children[0], escapeFunc, out, data, helpers, vars)
 	case parser.KindAccess, parser.KindNegate, parser.KindBracketAccess:
-		value := access(n, data, helpers, vars)
+		value := t.access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
 	case parser.KindIdentifier, parser.KindVariable, parser.KindInt, parser.KindInfix, parser.KindCall, parser.KindMap:
-		value := access(n, data, helpers, vars)
+		value := t.access(n, data, helpers, vars)
 
 		out.Write([]byte(valueToString(value, escapeFunc)))
 	case parser.KindIf:
-		conditionResult := access(n.Children[0], data, helpers, vars)
+		conditionResult := t.access(n.Children[0], data, helpers, vars)
 
 		if conditionResult == true {
-			eval(n.Children[1], escapeFunc, out, data, helpers, vars)
+			t.eval(n.Children[1], escapeFunc, out, data, helpers, vars)
 		} else if len(n.Children) > 2 && n.Children[2] != nil {
-			eval(n.Children[2], escapeFunc, out, data, helpers, vars)
+			t.eval(n.Children[2], escapeFunc, out, data, helpers, vars)
 		}
 	case parser.KindBlock:
 		for _, child := range n.Children {
-			eval(child, escapeFunc, out, data, helpers, vars)
+			t.eval(child, escapeFunc, out, data, helpers, vars)
 		}
 	case parser.KindRange:
 		newVars := make(map[string]any, len(vars)+2)
@@ -130,10 +132,10 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 		var body *parser.Node
 
 		if len(n.Children) == 4 {
-			toLoop = access(n.Children[2], data, helpers, vars)
+			toLoop = t.access(n.Children[2], data, helpers, vars)
 			body = n.Children[3]
 		} else {
-			toLoop = access(n.Children[1], data, helpers, vars)
+			toLoop = t.access(n.Children[1], data, helpers, vars)
 			body = n.Children[2]
 		}
 
@@ -145,7 +147,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 				newVars[iteratorName] = i
 				newVars[valueName] = v.Index(i).Interface()
 
-				eval(body, escapeFunc, out, data, helpers, newVars)
+				t.eval(body, escapeFunc, out, data, helpers, newVars)
 			}
 		case reflect.Map:
 			sorted := mapsort.Sort(v)
@@ -154,28 +156,28 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 				newVars[iteratorName] = sorted.Keys[i].Interface()
 				newVars[valueName] = sorted.Values[i].Interface()
 
-				eval(body, escapeFunc, out, data, helpers, newVars)
+				t.eval(body, escapeFunc, out, data, helpers, newVars)
 			}
 		default:
-			panic(fmt.Sprintf("attempted to range over %s", v.Kind()))
+			t.panicWithTrace(n, fmt.Sprintf("attempted to range over %s", v.Kind()))
 		}
 	default:
-		panic(fmt.Sprintf("unsupported kind %s", n.Kind))
+		t.panicWithTrace(n, fmt.Sprintf("unsupported kind %s", n.Kind))
 	}
 }
 
-func access(n *parser.Node, data map[string]any, helpers map[string]any, vars map[string]any) any {
+func (t *Template) access(n *parser.Node, data map[string]any, helpers map[string]any, vars map[string]any) any {
 	switch n.Kind {
 	case parser.KindCall:
-		toCall := reflect.ValueOf(access(n.Children[0], data, helpers, vars))
+		toCall := reflect.ValueOf(t.access(n.Children[0], data, helpers, vars))
 		args := make([]reflect.Value, 0, len(n.Children)-1)
 		for _, arg := range n.Children[1:] {
-			args = append(args, reflect.ValueOf(access(arg, data, helpers, vars)))
+			args = append(args, reflect.ValueOf(t.access(arg, data, helpers, vars)))
 		}
 
 		return toCall.Call(args)[0].Interface()
 	case parser.KindNegate:
-		value := access(n.Children[0], data, helpers, vars)
+		value := t.access(n.Children[0], data, helpers, vars)
 		switch reflect.ValueOf(value).Kind() {
 		case reflect.Int:
 			return value.(int) * -1
@@ -194,7 +196,8 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 		case reflect.Float64:
 			return value.(float64) * -1
 		default:
-			panic(fmt.Sprintf("can't negate type %s", reflect.ValueOf(value).Kind()))
+			t.panicWithTrace(n, fmt.Sprintf("can't negate type %s", reflect.ValueOf(value).Kind()))
+			return nil
 		}
 	case parser.KindTrue:
 		return true
@@ -206,8 +209,8 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 		val, _ := strconv.Atoi(n.Value)
 		return val
 	case parser.KindInfix:
-		left := access(n.Children[0], data, helpers, vars)
-		right := access(n.Children[2], data, helpers, vars)
+		left := t.access(n.Children[0], data, helpers, vars)
+		right := t.access(n.Children[2], data, helpers, vars)
 
 		switch n.Children[1].Value {
 		case "!=":
@@ -225,7 +228,8 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 		case "%":
 			return modulo(left, right)
 		default:
-			panic(fmt.Sprintf("Unsupported operator: %s on line %d", n.Children[1].Value, n.Children[1].StartLine))
+			t.panicWithTrace(n, fmt.Sprintf("Unsupported operator: %s", n.Children[1].Value))
+			return nil
 		}
 
 	case parser.KindIdentifier:
@@ -247,13 +251,13 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 			key := child.Children[0]
 			value := child.Children[1]
 
-			m[key.Value] = reflect.ValueOf(access(value, data, helpers, vars)).Interface()
+			m[key.Value] = reflect.ValueOf(t.access(value, data, helpers, vars)).Interface()
 		}
 
 		return m
 	case parser.KindBracketAccess:
-		root := access(n.Children[0], data, helpers, vars)
-		accessor := access(n.Children[1], data, helpers, vars)
+		root := t.access(n.Children[0], data, helpers, vars)
+		accessor := t.access(n.Children[1], data, helpers, vars)
 
 		rootVal := reflect.ValueOf(root)
 		accessorVal := reflect.ValueOf(accessor)
@@ -266,17 +270,20 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				return rootVal.Index(accessor.(int)).Interface()
 			default:
-				panic(fmt.Sprintf("can't index %s with %s", rootVal.Kind(), accessorVal.Kind()))
+				t.panicWithTrace(n, fmt.Sprintf("can't index %s with %s", rootVal.Kind(), accessorVal.Kind()))
+				return nil
 			}
 		default:
-			panic("cannot index non-map or non-slice")
+			t.panicWithTrace(n, "cannot index non-map/non-slice")
+			return nil
 		}
 	case parser.KindAccess:
-		root := access(n.Children[0], data, helpers, vars)
+		root := t.access(n.Children[0], data, helpers, vars)
 		propName := n.Children[1].Value
 
 		if root == nil {
-			panic(fmt.Sprintf("attempted to access property `%s` on nil value on line %d", propName, n.StartLine))
+			t.panicWithTrace(n, fmt.Sprintf("attempted to access property `%s` on nil value on line %d", propName, n.StartLine))
+			return nil
 		}
 
 		v := reflect.ValueOf(root)
@@ -304,14 +311,30 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 			value := v.MapIndex(reflect.ValueOf(propName))
 			return value.Interface()
 		default:
-			panic(fmt.Sprintf("access on type %s on line %d", k, n.StartLine))
+			t.panicWithTrace(n, fmt.Sprintf("access on type %s on line %d", k, n.StartLine))
+			return nil
 		}
 	case parser.KindString:
 		// Cut off opening " and closing "
 		return n.Value[1 : len(n.Value)-1]
 	default:
-		panic(fmt.Sprintf("unsupported access called on type %s", n.Kind))
+		t.panicWithTrace(n, fmt.Sprintf("unsupported access called on type %s", n.Kind))
+		return nil
 	}
+}
+
+func (t *Template) panicWithTrace(n *parser.Node, msg string) {
+	lines := strings.Split(t.raw, "\n")
+
+	endLine := n.EndLine
+	if endLine == 0 {
+		endLine = n.StartLine
+	}
+	relevantLines := lines[n.StartLine-1 : endLine]
+
+	errorMessage := fmt.Sprintf("%s starting on line %d:\n%s", msg, n.StartLine, strings.Join(relevantLines, "\n"))
+
+	panic(errorMessage)
 }
 
 // TODO this needs to check for the stringer interface, and maybe handle values

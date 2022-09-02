@@ -86,3 +86,16 @@ func TestEngine_DefaultHelper_Partial(t *testing.T) {
 
 	require.Equal(t, "Hi Fox Mulder", b.String())
 }
+
+func TestEngine_Errors(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("hello", "{{name[0]}}")
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "starting on line 1")
+	require.ErrorContains(t, err, "{{name[0]}}")
+}
