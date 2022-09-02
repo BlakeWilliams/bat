@@ -110,7 +110,7 @@ func (t *Template) eval(n *parser.Node, escapeFunc func(string) string, out io.W
 	case parser.KindIf:
 		conditionResult := t.access(n.Children[0], data, helpers, vars)
 
-		if conditionResult == true {
+		if conditionResult != nil && conditionResult != false {
 			t.eval(n.Children[1], escapeFunc, out, data, helpers, vars)
 		} else if len(n.Children) > 2 && n.Children[2] != nil {
 			t.eval(n.Children[2], escapeFunc, out, data, helpers, vars)

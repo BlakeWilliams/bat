@@ -108,6 +108,17 @@ func TestTemplate_IfTrue(t *testing.T) {
 	require.Equal(t, "Hello!", b.String())
 }
 
+func TestTemplate_IfTruthy(t *testing.T) {
+	template, err := NewTemplate("{{if name}}Hello!{{end}}")
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello!", b.String())
+}
+
 func TestTemplate_IfFalse(t *testing.T) {
 	template, err := NewTemplate("{{if false == false}}Hello!{{end}}")
 	require.NoError(t, err)
