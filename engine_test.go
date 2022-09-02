@@ -30,7 +30,7 @@ var fixtures embed.FS
 func TestEngine_AutoRegister(t *testing.T) {
 	engine := NewEngine(NoEscape)
 
-	err := engine.AutoRegister(fixtures, ".html")
+	err := engine.AutoRegister(fixtures, "", ".html")
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"reflect"
 	"strings"
 )
@@ -94,7 +93,8 @@ func (e *Engine) Render(b io.Writer, name string, data map[string]any) error {
 }
 
 // AutoRegister recursivly finds all files with the given extension and
-// registers them as a template on the engine.
+// registers them as a template on the engine. If removePathPrefix is provided,
+// it will register templates without the given prefix.
 //
 // e.g. e.AutoRegister("./templates", ".html") and a file
 // ./templates/users/hello.html will register the template with a name of
@@ -102,7 +102,11 @@ func (e *Engine) Render(b io.Writer, name string, data map[string]any) error {
 //
 // This is designed to be used with the embed package, allowing templates to be
 // compiled into the resulting binary.
-func (e *Engine) AutoRegister(dir fs.FS, extension string) error {
+func (e *Engine) AutoRegister(dir fs.FS, pathPrefix string, extension string) error {
+	if pathPrefix != "" && !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix += "/"
+	}
+
 	err := fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error walking directory: %s", err)
@@ -112,7 +116,7 @@ func (e *Engine) AutoRegister(dir fs.FS, extension string) error {
 			return nil
 		}
 
-		f, err := os.Open(path)
+		f, err := dir.Open(path)
 
 		if err != nil {
 			return fmt.Errorf("error opening file: %s", err)
@@ -123,16 +127,16 @@ func (e *Engine) AutoRegister(dir fs.FS, extension string) error {
 			return fmt.Errorf("error reading file: %s", err)
 		}
 
-		err = e.Register(path, string(contents))
+		err = e.Register(strings.TrimPrefix(path, pathPrefix), string(contents))
 
 		if err != nil {
-			return fmt.Errorf("could not register template", err)
+			return fmt.Errorf("could not register template: %w", err)
 		}
 		return nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("could not auto-register templates: %s", err)
+		return fmt.Errorf("could not auto-register templates: %w", err)
 	}
 
 	return nil

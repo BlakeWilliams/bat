@@ -110,7 +110,7 @@ func eval(n *parser.Node, escapeFunc func(string) string, out io.Writer, data ma
 
 		if conditionResult == true {
 			eval(n.Children[1], escapeFunc, out, data, helpers, vars)
-		} else if n.Children[2] != nil {
+		} else if len(n.Children) > 2 && n.Children[2] != nil {
 			eval(n.Children[2], escapeFunc, out, data, helpers, vars)
 		}
 	case parser.KindBlock:
@@ -260,7 +260,6 @@ func access(n *parser.Node, data map[string]any, helpers map[string]any, vars ma
 
 		switch rootVal.Kind() {
 		case reflect.Map:
-			fmt.Println(rootVal)
 			return rootVal.MapIndex(reflect.ValueOf(accessor)).Interface()
 		case reflect.Slice, reflect.Array:
 			switch accessorVal.Kind() {

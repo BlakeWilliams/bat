@@ -119,6 +119,17 @@ func TestTemplate_IfFalse(t *testing.T) {
 	require.Equal(t, "Hello!", b.String())
 }
 
+func TestTemplate_IfFalsNoElse(t *testing.T) {
+	template, err := NewTemplate("{{if false}}Hello!{{end}}")
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{})
+	require.NoError(t, err)
+
+	require.Equal(t, "", b.String())
+}
+
 func TestTemplateRange(t *testing.T) {
 	template, err := NewTemplate(`
 	{{range $i, $val in people}}
