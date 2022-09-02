@@ -349,6 +349,8 @@ func valueToString(v any, escape func(string) string) string {
 		return string(val)
 	case string:
 		return escape(val)
+	case nil:
+		return ""
 	default:
 		return escape(fmt.Sprintf("%v", v))
 	}

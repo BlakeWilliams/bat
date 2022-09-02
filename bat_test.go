@@ -485,3 +485,15 @@ func TestTemplate_BracketAccess(t *testing.T) {
 	expected := "1"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_Nil(t *testing.T) {
+	template, err := NewTemplate(`{{ value }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{})
+	require.NoError(t, err)
+
+	expected := ""
+	require.Equal(t, expected, b.String())
+}
