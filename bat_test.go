@@ -532,3 +532,14 @@ func TestTemplate_NotTruthy(t *testing.T) {
 	expected := "false"
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_HelperCallError(t *testing.T) {
+	template, err := NewTemplate(`{{ foo() }}`, WithHelpers(map[string]any{"foo": func(x int) {}}))
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"value": true})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "error calling function 'foo'")
+	require.ErrorContains(t, err, "too few input arguments")
+}

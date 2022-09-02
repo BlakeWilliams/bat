@@ -178,7 +178,17 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 			args = append(args, reflect.ValueOf(t.access(arg, data, helpers, vars)))
 		}
 
-		return toCall.Call(args)[0].Interface()
+		// Wrap the call in a closure to allow for the possibility of panics so
+		// we can provide good error messages
+		return func() any {
+			defer func() {
+				if err := recover(); err != nil {
+					t.panicWithTrace(n.Children[0], fmt.Sprintf("error calling function '%s': %s", n.Children[0].Value, err))
+				}
+			}()
+
+			return toCall.Call(args)[0].Interface()
+		}()
 	case parser.KindNegate:
 		value := t.access(n.Children[0], data, helpers, vars)
 		switch reflect.ValueOf(value).Kind() {

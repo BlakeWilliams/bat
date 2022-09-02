@@ -154,7 +154,7 @@ func TestParse_BrokenNestedIf(t *testing.T) {
 	l := lexer.Lex("{{if name != nil != bar}}{{end}}")
 	_, err := Parse(l)
 	require.Error(t, err)
-	require.ErrorContains(t, err, "unexpected token !")
+	require.ErrorContains(t, err, "unexpected token '!'")
 }
 
 func TestParse_String(t *testing.T) {
