@@ -162,6 +162,23 @@ func (t *Template) eval(n *parser.Node, out io.Writer, data map[string]any, help
 
 				t.eval(body, out, data, helpers, newVars)
 			}
+		case reflect.Chan:
+			defaultCase := reflect.SelectCase{Dir: reflect.SelectDefault}
+			recvCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: v}
+
+			i := 0
+			cases := []reflect.SelectCase{defaultCase, recvCase}
+			for {
+				chosen, value, ok := reflect.Select(cases)
+
+				if chosen == 0 || !ok {
+					break
+				}
+				newVars[iteratorName] = i
+				newVars[valueName] = value.Interface()
+				t.eval(body, out, data, helpers, newVars)
+				i++
+			}
 		default:
 			t.panicWithTrace(n, fmt.Sprintf("attempted to range over %s", v.Kind()))
 		}

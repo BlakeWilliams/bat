@@ -269,7 +269,7 @@ implementation.
 - [x] Add basic math operations
 - [x] Simple map class `{ "foo": bar }` for use with partials
 - [ ] Improve stringify logic in the executor (`bat.go`)
-- [ ] Support channels in `range`
+- [x] Support channels in `range`
 - [ ] Trim whitespace by default, add control characters to avoid trimming.
 - [x] Support method calls
 - [x] Support helpers
@@ -278,9 +278,9 @@ implementation.
 ## Maybe
 
 - Add &&, and || operators for more complex conditionals
-- Replace `{{end}}` with named end blocks, like `{{/if}}`
+- ~Replace `{{end}}` with named end blocks, like `{{/if}}`~ rejected
 - Add support for `{{else if <expression>}}`
-- Support the not operator, e.g. `if !foo`
+- ~Support the not operator, e.g. `if !foo`~ done
 - Track and error on undefined variable usage in the parsing stage
 
 ## Don't
