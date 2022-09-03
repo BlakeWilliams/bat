@@ -24,31 +24,67 @@ type parser struct {
 }
 
 const (
-	KindRoot       = "root"
-	KindText       = "text"
-	KindStatement  = "statement"
-	KindAccess     = "access"
+	// KindRoot is always the first node in the AST tree
+	KindRoot = "root"
+	// KindText represents text outside of {{ }} blocks and is output as-is
+	KindText = "text"
+	// Statements represents the nodes between {{ and }}
+	KindStatement = "statement"
+	// KindAccess represents a dot-separated access to a field or method
+	// e.g. "foo.bar.baz"
+	KindAccess = "access"
+	// KindIdentifier represent passed in data values, helper methods, etc. (e.g. "foo")
 	KindIdentifier = "identifier"
-	KindIf         = "if"
-	KindInfix      = "infix"
-	KindOperator   = "operator"
-	KindNil        = "nil"
-	KindTrue       = "true"
-	KindFalse      = "false"
-	KindRange      = "range"
-	KindVariable   = "variable"
-	KindString     = "string"
-	KindInt        = "int"
-	// Represents blocks of top-level items for use in if/else, range body, etc.
-	KindBlock         = "block"
-	KindNegate        = "negate"
-	KindCall          = "call"
-	KindMap           = "map"
-	KindPair          = "pair"
+	// KindIf represents an if statement. The first child node will be the
+	// condition, the second child node will be the code executed when condition
+	// is truthy, the third child node (if present) will be code executed when
+	// condition is falsy.
+	KindIf = "if"
+	// KindInfix represents an infix expression (e.g. "foo + bar", "foo == bar")
+	KindInfix = "infix"
+	// KindInfix represents an operator (e.g. "/", "+", "*")
+	KindOperator = "operator"
+	// KindNil represents a nil literal.
+	KindNil = "nil"
+	// KindTrue represents a true literal.
+	KindTrue = "true"
+	// KindFalse represents a false literal.
+	KindFalse = "false"
+	// KindRange represents a range statement.
+	//
+	// If range has 4 children, the first child will be the index or key, the
+	// second child will be the value, the third child will be the value to
+	// iterate over, and the fourth child will be the code to execute for each
+	// iteration.
+	//
+	// If range has 3 children, the first child will be the index or key, the
+	// second child will be the value to iterate over, and the third child will
+	// be the code to execute for each iteration.
+	KindRange = "range"
+	// KindVariable represents a variable. (e.g. "$foo")
+	KindVariable = "variable"
+	// KindString represents a string literal. (e.g. "foo")
+	KindString = "string"
+	// KindInt represents an integer literal. (e.g. 123)
+	KindInt = "int"
+	// KindBlock represents a block of code within a block statement, e.g. the code from an if, else, or range.
+	KindBlock = "block"
+	// KindNegate represents a negation expression (e.g. "-foo")
+	KindNegate = "negate"
+	// KindCall represents a function call (e.g. "foo()")
+	KindCall = "call"
+	// KindMap represents a map literal (e.g. "{foo: bar}")
+	KindMap = "map"
+	// KindPair represents a key/value pair in a map literal (e.g. "foo: bar")
+	KindPair = "pair"
+	// KindBracketAccess represents an access to a value in a map literal (e.g. "foo[bar]" or "foo["bar"]")
 	KindBracketAccess = "bracket_access"
-	KindNot           = "not"
+	// KindNot represents a not expression (e.g. "!foo")
+	KindNot = "not"
 )
 
+// String() prints the AST in a typical s-expression format for easy
+// reading/debugging.
 func (n *Node) String() string {
 	out := fmt.Sprintf("(%s", n.Kind)
 
@@ -97,6 +133,7 @@ func (p *parser) skipWhitespace() {
 	}
 }
 
+// Parse takes the lexer output and returns the AST that can be exuected.
 func Parse(l *lexer.Lexer) (_ *Node, err error) {
 	defer func() {
 		if r := recover(); r != nil {
