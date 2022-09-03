@@ -10,7 +10,7 @@ import (
 )
 
 func BenchmarkHelloWorld(b *testing.B) {
-	batTemplate, err := NewTemplate(`Hello {{name}}`)
+	batTemplate, err := NewTemplate(`Hello {{name}}`, WithEscapeFunc(HTMLEscape))
 	require.NoError(b, err)
 
 	htmlTemplate, err := template.New("foo").Parse(`Hello {{.Name}}`)
@@ -41,7 +41,7 @@ func BenchmarkHelloWorld(b *testing.B) {
 }
 
 func BenchmarkRangeIf(b *testing.B) {
-	batTemplate, err := NewTemplate(`{{range $_, $name in Names}}{{if $name != "Smoking Man"}}Hello {{$name}}{{else}}Ugh, {{$name}}{{end}}{{end}}`)
+	batTemplate, err := NewTemplate(`{{range $_, $name in Names}}{{if $name != "Smoking Man"}}Hello {{$name}}{{else}}Ugh, {{$name}}{{end}}{{end}}`, WithEscapeFunc(HTMLEscape))
 	require.NoError(b, err)
 
 	htmlTemplate, err := template.New("foo").Parse(`{{range $name := .Names}}{{if ne $name "Smoking Man"}}Hello {{$name}}{{else}}Ugh, {{$name}}{{end}}{{end}}`)
