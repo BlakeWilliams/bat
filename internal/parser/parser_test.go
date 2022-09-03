@@ -93,6 +93,30 @@ func TestParse_If(t *testing.T) {
 	require.Equal(t, expected.String(), result.String())
 }
 
+func TestParse_IfHelper(t *testing.T) {
+	l := lexer.Lex("{{if len(name) != nil}}Hello{{end}}")
+	result, err := Parse(l)
+	require.NoError(t, err)
+
+	expected := n(KindRoot, "", []*Node{
+		n(KindStatement, "", []*Node{
+			n(KindIf, "", []*Node{
+				n(KindInfix, "", []*Node{
+					n(KindCall, "", []*Node{
+						n(KindIdentifier, "len", nil),
+						n(KindIdentifier, "name", nil),
+					}),
+					n(KindOperator, "!=", nil),
+					n(KindNil, "nil", nil),
+				}),
+				n(KindBlock, "", []*Node{n(KindText, "Hello", nil)}),
+			}),
+		}),
+	})
+
+	require.Equal(t, expected.String(), result.String())
+}
+
 func TestParse_Range(t *testing.T) {
 	l := lexer.Lex("{{range $foo, $bar in data}}1{{end}}")
 	result, err := Parse(l)

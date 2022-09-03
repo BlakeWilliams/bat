@@ -274,7 +274,8 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 			}
 		}
 
-		return node
+		rootNode = node
+		p.skipWhitespace()
 	}
 
 	if wrapInNot {

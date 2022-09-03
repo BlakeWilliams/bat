@@ -2,6 +2,7 @@ package bat
 
 import (
 	"bytes"
+	"reflect"
 	"strconv"
 	"testing"
 
@@ -542,4 +543,16 @@ func TestTemplate_HelperCallError(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "error calling function 'foo'")
 	require.ErrorContains(t, err, "too few input arguments")
+}
+
+func TestTemplate_IfHelper(t *testing.T) {
+	lenHelper := func(v any) int { return reflect.ValueOf(v).Len() }
+	template, err := NewTemplate(`{{ if len(foo) == 0 }}bar{{end}}`, WithHelpers(map[string]any{"len": lenHelper}))
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"foo": []string{}})
+	require.NoError(t, err)
+
+	require.Equal(t, "bar", b.String())
 }
