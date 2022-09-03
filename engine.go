@@ -27,6 +27,9 @@ func NewEngine(escapeFunc func(text string) string) *Engine {
 	}
 
 	defaultHelpers := map[string]any{
+		"len": func(v any) int {
+			return reflect.ValueOf(v).Len()
+		},
 		"safe": func(s string) Safe {
 			return Safe(s)
 		},

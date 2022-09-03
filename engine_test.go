@@ -72,6 +72,19 @@ func TestEngine_DefaultHelper_Safe(t *testing.T) {
 	require.Equal(t, "<h1>hi</h1>", b.String())
 }
 
+func TestEngine_DefaultHelper_Len(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("foo", `{{len("some value")}}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "foo", map[string]any{})
+	require.NoError(t, err)
+
+	require.Equal(t, "10", b.String())
+}
+
 func TestEngine_DefaultHelper_Partial(t *testing.T) {
 	engine := NewEngine(NoEscape)
 
