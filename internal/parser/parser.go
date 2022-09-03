@@ -436,7 +436,6 @@ func (p *parser) panicWithMessage(msg string) {
 		end = start
 	}
 
-	fmt.Println()
 	message := fmt.Sprintf("error on line %d - %s:\n%s", token.StartLine, msg, strings.Join(lines[start-1:end], "\n"))
 	panic(message)
 }
