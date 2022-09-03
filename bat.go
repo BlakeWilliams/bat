@@ -146,7 +146,7 @@ func (t *Template) eval(n *parser.Node, out io.Writer, data map[string]any, help
 		v := reflect.ValueOf(toLoop)
 
 		switch v.Kind() {
-		case reflect.Slice:
+		case reflect.Slice, reflect.Array:
 			for i := 0; i < v.Len(); i++ {
 				newVars[iteratorName] = i
 				newVars[valueName] = v.Index(i).Interface()

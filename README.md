@@ -138,7 +138,7 @@ The above will render `false`.
 
 ### Iterators
 
-Iteration is supported via the `range` keyword. Both slices and maps are supported.
+Iteration is supported via the `range` keyword. Supported types are slices, maps, arrays, and channels.
 
 ```html
 {{range $index, $name in data}}

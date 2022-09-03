@@ -583,3 +583,27 @@ func TestTemplateRange_Channel(t *testing.T) {
 	`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplateRange_Array(t *testing.T) {
+	template, err := NewTemplate(`
+	{{range $i, $val in people}}
+		<h1>Hello, {{$val}}, person #{{$i}}</h1>
+	{{end}}
+	`)
+	require.NoError(t, err)
+
+	data := map[string]any{"people": [2]string{"Fox Mulder", "Dana Scully"}}
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `
+	
+		<h1>Hello, Fox Mulder, person #0</h1>
+	
+		<h1>Hello, Dana Scully, person #1</h1>
+	
+	`
+	require.Equal(t, expected, b.String())
+}
