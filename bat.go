@@ -112,8 +112,9 @@ func (t *Template) eval(n *parser.Node, out io.Writer, data map[string]any, help
 		out.Write([]byte(valueToString(value, t.escapeFunc)))
 	case parser.KindIf:
 		conditionResult := t.access(n.Children[0], data, helpers, vars)
+		v := reflect.ValueOf(conditionResult)
 
-		if conditionResult != nil && conditionResult != false {
+		if isTruthy(v) {
 			t.eval(n.Children[1], out, data, helpers, vars)
 		} else if len(n.Children) > 2 && n.Children[2] != nil {
 			t.eval(n.Children[2], out, data, helpers, vars)
@@ -235,9 +236,9 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 
 		switch n.Children[1].Value {
 		case "!=":
-			return left != right
+			return !compare(reflect.ValueOf(left), reflect.ValueOf(right))
 		case "==":
-			return left == right
+			return compare(reflect.ValueOf(left), reflect.ValueOf(right))
 		case "-":
 			return subtract(left, right)
 		case "+":
@@ -249,7 +250,7 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 		case "%":
 			return modulo(left, right)
 		default:
-			t.panicWithTrace(n, fmt.Sprintf("Unsupported operator: %s", n.Children[1].Value))
+			t.panicWithTrace(n, fmt.Sprintf("Unsupported operator '%s'", n.Children[1].Value))
 			return nil
 		}
 
