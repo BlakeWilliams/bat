@@ -401,3 +401,43 @@ func TestLex_EmptyBraces(t *testing.T) {
 	require.Equal(t, l.Tokens[2].Kind, KindOpenCurly)
 	require.Equal(t, l.Tokens[3].Kind, KindCloseCurly)
 }
+
+func TestLex_UnderscoreVariable(t *testing.T) {
+	input := `{{ $_ }}`
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 6)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindSpace)
+	require.Equal(t, l.Tokens[2].Kind, KindVariable)
+	require.Equal(t, l.Tokens[3].Kind, KindSpace)
+	require.Equal(t, l.Tokens[4].Kind, KindRightDelim)
+
+	require.Equal(t, "$_", l.Tokens[2].Value)
+}
+
+func TestLex_InvalidVariableName(t *testing.T) {
+	input := `{{ $^ }}`
+	l := Lexer{Input: input, Tokens: make([]Token, 0), Line: 1}
+
+	l.run()
+	require.Equal(t, KindError, l.Tokens[len(l.Tokens)-1].Kind)
+}
+
+func TestLex_UnderscoreIdentifier(t *testing.T) {
+	input := `{{ _ }}`
+	l := Lexer{Input: input, Tokens: make([]Token, 0)}
+
+	l.run()
+	require.Len(t, l.Tokens, 6)
+
+	require.Equal(t, l.Tokens[0].Kind, KindLeftDelim)
+	require.Equal(t, l.Tokens[1].Kind, KindSpace)
+	require.Equal(t, l.Tokens[2].Kind, KindIdentifier)
+	require.Equal(t, l.Tokens[3].Kind, KindSpace)
+	require.Equal(t, l.Tokens[4].Kind, KindRightDelim)
+
+	require.Equal(t, "_", l.Tokens[2].Value)
+}

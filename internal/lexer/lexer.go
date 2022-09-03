@@ -203,7 +203,7 @@ func lexAction(l *Lexer) stateFn {
 		return lexAction
 	case unicode.IsSpace(r):
 		return lexSpace
-	case unicode.IsLetter(r):
+	case unicode.IsLetter(r) || r == '_':
 		return lexIdentifier
 	case unicode.IsNumber(r):
 		return lexNumber
@@ -238,7 +238,7 @@ func lexVariable(l *Lexer) stateFn {
 			break
 		}
 
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
 			l.backup()
 			break
 		}
@@ -257,7 +257,7 @@ func lexIdentifier(l *Lexer) stateFn {
 			break
 		}
 
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
 			l.backup()
 			break
 		}
