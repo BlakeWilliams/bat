@@ -46,6 +46,15 @@ engine.AutoRegister(templates, ".html")
 engine.Render("templates/users/signup.html", map[string]any{"Team": team})
 ```
 
+#### Built-in helpers
+
+- `safe` - marks a value as safe to be rendered. This is useful for rendering
+  HTML. For example, `{{safe("<h1>Foo</h1>")}}` will render `<h1>Foo</h1>`.
+- `len` - returns the length of a slice or map. For example, `{{len(Users)}}` will
+  return the length of the `Users` slice.
+- `partial` - renders a partial template. For example, `{{partial("header", {foo: "bar"})}}`
+  will render the `header` template with the provided map as locals.
+
 Here's an overview of more advanced usage:
 
 ### Primitives
