@@ -306,8 +306,22 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 			return rootVal.MapIndex(reflect.ValueOf(accessor)).Interface()
 		case reflect.Slice, reflect.Array:
 			switch accessorVal.Kind() {
-			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			case reflect.Int:
 				return rootVal.Index(accessor.(int)).Interface()
+			case reflect.Int16:
+				return rootVal.Index(int(accessor.(int16))).Interface()
+			case reflect.Int32:
+				return rootVal.Index(int(accessor.(int32))).Interface()
+			case reflect.Int64:
+				return rootVal.Index(int(accessor.(int64))).Interface()
+			case reflect.Uint:
+				return rootVal.Index(int(accessor.(uint))).Interface()
+			case reflect.Uint16:
+				return rootVal.Index(int(accessor.(uint16))).Interface()
+			case reflect.Uint32:
+				return rootVal.Index(int(accessor.(uint32))).Interface()
+			case reflect.Uint64:
+				return rootVal.Index(int(accessor.(uint64))).Interface()
 			default:
 				t.panicWithTrace(n, fmt.Sprintf("can't index %s with %s", rootVal.Kind(), accessorVal.Kind()))
 				return nil

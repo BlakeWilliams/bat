@@ -116,8 +116,12 @@ func (k Kind) String() string {
 		return "closeCurly"
 	case KindColon:
 		return "colon"
+	case KindOpenBracket:
+		return "closeBracket"
+	case KindCloseBracket:
+		return "closeBracket"
 	default:
-		return fmt.Sprintf("uknown %d", k)
+		return fmt.Sprintf("unknown %d", k)
 	}
 }
 

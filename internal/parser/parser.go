@@ -326,10 +326,6 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 		rootNode = newRoot
 	}
 
-	if !allowOperator {
-		return rootNode
-	}
-
 	// check for ==, -, !=,
 	// protect against foo -1 vs foo - 1 and foo != bar vs foo !bar
 	next := p.peek()
@@ -342,7 +338,16 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 		if p.peekn(2).Kind != lexer.KindEqual {
 			return rootNode
 		}
-	case lexer.KindEqual, lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent:
+
+		if !allowOperator {
+			return rootNode
+		}
+	case lexer.KindEqual:
+		if !allowOperator {
+			return rootNode
+		}
+	case lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent:
+
 		// do nothing, fall through to parse operator
 	default:
 		return rootNode
@@ -362,9 +367,9 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 	node.Children = append(node.Children, operator)
 	right := parseExpression(p, false)
 
-	if right.Kind == KindInfix {
-		panic("infix operator cannot follow infix operator")
-	}
+	// if right.Kind == KindInfix {
+	// 	panic("infix operator cannot follow infix operator")
+	// }
 	node.Children = append(node.Children, right)
 
 	return node
@@ -413,7 +418,7 @@ func parseLiteralOrAccess(p *parser) *Node {
 	case lexer.KindVariable, lexer.KindIdentifier:
 		return parseVariable(p)
 	default:
-		panic(fmt.Sprintf("Unexpected identifier %s", p.peek().Kind.String()))
+		p.panicWithMessage(fmt.Sprintf("Unexpected identifier %s", p.peek().Kind.String()))
 	}
 
 	identifierToken := p.next()

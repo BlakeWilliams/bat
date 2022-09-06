@@ -607,3 +607,29 @@ func TestTemplateRange_Array(t *testing.T) {
 	`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_IfWithSubtraction(t *testing.T) {
+	template, err := NewTemplate(`{{if 999 == 1000 - 1}}hello 999!{{end}}`)
+
+	require.NoError(t, err)
+	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `hello 999!`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_ArrayAccessInt64(t *testing.T) {
+	template, err := NewTemplate(`{{ foo[i] }}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"foo": []string{"bar"}, "i": int64(0)}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `bar`
+	require.Equal(t, expected, b.String())
+}
