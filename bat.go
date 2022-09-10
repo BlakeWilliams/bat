@@ -354,7 +354,7 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 				return value.Interface()
 			}
 
-			t.panicWithTrace(n, fmt.Sprintf("no field or method for type %s on line %d", reflect.TypeOf(root), n.StartLine))
+			t.panicWithTrace(n, fmt.Sprintf("no field or method '%s' for type %s on line %d", propName, reflect.TypeOf(root), n.StartLine))
 			return nil
 		}
 
