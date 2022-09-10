@@ -340,26 +340,30 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 		}
 
 		v := reflect.ValueOf(root)
-
 		k := v.Kind()
-		if k == reflect.Pointer {
-			v = v.Elem()
-			k = v.Kind()
-		}
 
-		switch k {
-		case reflect.Struct:
+		// Special case structs, because pointer methods
+		if k == reflect.Struct || k == reflect.Pointer && v.Elem().Kind() == reflect.Struct {
 			// Support field access
 			if value := reflect.Indirect(v).FieldByName(propName); !reflect.ValueOf(value).IsZero() {
 				return value.Interface()
 			}
 
 			// Support method access
-			if value := reflect.Indirect(v).MethodByName(propName); !reflect.ValueOf(value).IsZero() {
+			if value := v.MethodByName(propName); !reflect.ValueOf(value).IsZero() {
 				return value.Interface()
 			}
 
+			t.panicWithTrace(n, fmt.Sprintf("no field or method for type %s on line %d", reflect.TypeOf(root), n.StartLine))
 			return nil
+		}
+
+		if k == reflect.Pointer {
+			v = v.Elem()
+			k = v.Kind()
+		}
+
+		switch k {
 		case reflect.Map:
 			value := v.MapIndex(reflect.ValueOf(propName))
 			return value.Interface()

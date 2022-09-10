@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -631,5 +632,26 @@ func TestTemplate_ArrayAccessInt64(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := `bar`
+	require.Equal(t, expected, b.String())
+}
+
+type callableType struct {
+	body string
+}
+
+func (c *callableType) UpperBody() string {
+	return strings.ToUpper(c.body)
+}
+
+func TestTemplate_ValueMethods(t *testing.T) {
+	template, err := NewTemplate(`{{ value.UpperBody() }}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"value": &callableType{body: "hello"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `HELLO`
 	require.Equal(t, expected, b.String())
 }
