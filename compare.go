@@ -49,6 +49,10 @@ func lessThan(leftValue any, rightValue any) bool {
 		return left.Float() < float64(right.Int())
 	case lCore == coreInt && rCore == coreFloat:
 		return float64(left.Int()) < right.Float()
+	case lCore == coreFloat && rCore == coreUint:
+		return left.Float() < float64(right.Uint())
+	case lCore == coreUint && rCore == coreFloat:
+		return float64(left.Uint()) < right.Float()
 	}
 
 	panic(fmt.Sprintf("can't compare type %s and %s", lKind, rKind))

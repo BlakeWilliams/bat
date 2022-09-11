@@ -77,11 +77,12 @@ func TestLessThan(t *testing.T) {
 		right    any
 		expected bool
 	}{
-		"ints":            {left: 1, right: 2, expected: true},
-		"uints":           {left: uint(1), right: uint(2), expected: true},
-		"floats":          {left: 3.0, right: 4.09, expected: true},
-		"mixed int uint":  {left: 1, right: uint(5), expected: true},
-		"mixed int float": {left: 1, right: 5.0, expected: true},
+		"ints":             {left: 1, right: 2, expected: true},
+		"uints":            {left: uint(1), right: uint(2), expected: true},
+		"floats":           {left: 3.0, right: 4.09, expected: true},
+		"mixed int uint":   {left: 1, right: uint(5), expected: true},
+		"mixed int float":  {left: 1, right: 5.0, expected: true},
+		"mixed uint float": {left: uint(1), right: 5.0, expected: true},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
