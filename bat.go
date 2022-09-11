@@ -266,6 +266,14 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 			return divide(left, right)
 		case "%":
 			return modulo(left, right)
+		case "<":
+			return lessThan(left, right)
+		case ">":
+			return greaterThan(left, right)
+		case "<=":
+			return lessThan(left, right) || compare(reflect.ValueOf(left), reflect.ValueOf(right))
+		case ">=":
+			return greaterThan(left, right) || compare(reflect.ValueOf(left), reflect.ValueOf(right))
 		default:
 			t.panicWithTrace(n, fmt.Sprintf("Unsupported operator '%s'", n.Children[1].Value))
 			return nil

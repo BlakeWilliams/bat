@@ -1,6 +1,7 @@
 package bat
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -14,6 +15,69 @@ func compare(left reflect.Value, right reflect.Value) bool {
 	}
 
 	return false
+}
+
+func lessThan(leftValue any, rightValue any) bool {
+	left := reflect.ValueOf(leftValue)
+	right := reflect.ValueOf(rightValue)
+
+	lKind := left.Kind()
+	rKind := right.Kind()
+
+	if lKind == rKind {
+		switch lKind {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return left.Int() < right.Int()
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+			return left.Uint() < right.Uint()
+		case reflect.Float32, reflect.Float64:
+			return left.Float() < right.Float()
+		default:
+			panic(fmt.Sprintf("can't compare type %s", lKind))
+		}
+	}
+
+	lCore := genericType(left)
+	rCore := genericType(right)
+
+	switch {
+	case lCore == coreInt && rCore == coreUint:
+		return uint64(left.Int()) < right.Uint()
+	case lCore == coreUint && rCore == coreInt:
+		return left.Uint() < uint64(right.Int())
+	case lCore == coreFloat && rCore == coreInt:
+		return left.Float() < float64(right.Int())
+	case lCore == coreInt && rCore == coreFloat:
+		return float64(left.Int()) < right.Float()
+	}
+
+	panic(fmt.Sprintf("can't compare type %s and %s", lKind, rKind))
+}
+
+func greaterThan(left any, right any) bool {
+	return lessThan(right, left)
+}
+
+type coreType int
+
+const (
+	coreInvalid coreType = iota
+	coreInt
+	coreFloat
+	coreUint
+)
+
+func genericType(v reflect.Value) coreType {
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return coreInt
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return coreUint
+	case reflect.Float32, reflect.Float64:
+		return coreFloat
+	default:
+		return coreInvalid
+	}
 }
 
 func isNil(v reflect.Value) bool {

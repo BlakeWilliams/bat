@@ -39,6 +39,8 @@ const (
 	KindColon
 	KindOpenBracket
 	KindCloseBracket
+	KindOpenAngle
+	KindCloseAngle
 )
 
 type Token struct {
@@ -117,9 +119,13 @@ func (k Kind) String() string {
 	case KindColon:
 		return "colon"
 	case KindOpenBracket:
-		return "closeBracket"
+		return "openBracket"
 	case KindCloseBracket:
 		return "closeBracket"
+	case KindOpenAngle:
+		return "openAngle"
+	case KindCloseAngle:
+		return "closeAngle"
 	default:
 		return fmt.Sprintf("unknown %d", k)
 	}

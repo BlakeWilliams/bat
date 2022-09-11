@@ -655,3 +655,55 @@ func TestTemplate_ValueMethods(t *testing.T) {
 	expected := `HELLO`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_VarGreaterThan(t *testing.T) {
+	template, err := NewTemplate(`{{ if Page > 1}}foo{{end}}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"Page": 2}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `foo`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_VarLessThan(t *testing.T) {
+	template, err := NewTemplate(`{{ if Page < 1}}foo{{end}}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"Page": 0}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `foo`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_VarGreaterThanEqual(t *testing.T) {
+	template, err := NewTemplate(`{{ if Page >= 1}}foo{{end}}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"Page": 1}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `foo`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_VarLessThanEqual(t *testing.T) {
+	template, err := NewTemplate(`{{ if Page <= 1}}foo{{end}}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"Page": 1}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `foo`
+	require.Equal(t, expected, b.String())
+}

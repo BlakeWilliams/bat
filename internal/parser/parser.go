@@ -346,8 +346,7 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 		if !allowOperator {
 			return rootNode
 		}
-	case lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent:
-
+	case lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent, lexer.KindCloseAngle, lexer.KindOpenAngle:
 		// do nothing, fall through to parse operator
 	default:
 		return rootNode
@@ -478,7 +477,11 @@ func (p *parser) panicWithMessage(msg string) {
 		end = start
 	}
 
-	message := fmt.Sprintf("error on line %d - %s:\n%s", token.StartLine, msg, strings.Join(lines[start-1:end], "\n"))
+	if start > 0 {
+		start = start - 1
+	}
+
+	message := fmt.Sprintf("error on line %d - %s:\n%s", token.StartLine, msg, strings.Join(lines[start:end], "\n"))
 	panic(message)
 }
 
@@ -525,11 +528,15 @@ func parseOperator(p *parser) *Node {
 		StartLine: token.StartLine,
 	}
 
-	if token.Kind == lexer.KindEqual || token.Kind == lexer.KindBang {
+	switch token.Kind {
+	case lexer.KindEqual, lexer.KindBang:
 		token = p.expect(lexer.KindEqual)
 		node.Value += "="
-	} else {
-		p.skipWhitespace()
+	case lexer.KindOpenAngle, lexer.KindCloseAngle:
+		if p.peek().Kind == lexer.KindEqual {
+			token = p.expect(lexer.KindEqual)
+			node.Value += "="
+		}
 	}
 	node.EndLine = token.EndLine
 

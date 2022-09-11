@@ -191,6 +191,14 @@ func lexAction(l *Lexer) stateFn {
 		l.next()
 		l.emit(KindCloseBracket)
 		return lexAction
+	case r == '<':
+		l.next()
+		l.emit(KindOpenAngle)
+		return lexAction
+	case r == '>':
+		l.next()
+		l.emit(KindCloseAngle)
+		return lexAction
 	case r == '$':
 		l.next()
 		return lexVariable
