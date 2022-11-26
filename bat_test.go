@@ -707,3 +707,30 @@ func TestTemplate_VarLessThanEqual(t *testing.T) {
 	expected := `foo`
 	require.Equal(t, expected, b.String())
 }
+
+func TestTemplate_MathOrder(t *testing.T) {
+	lenHelper := func(m []string) int {
+		return len(m)
+	}
+	template, err := NewTemplate(`{{ if 0 == len(Items) - 1 }}foo{{end}}`, WithHelpers(map[string]any{"len": lenHelper}))
+	require.NoError(t, err)
+
+	data := map[string]any{"Items": []string{"foo"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+	require.NoError(t, err)
+
+	expected := `foo`
+	require.Equal(t, expected, b.String())
+}
+
+func TestTemplate_MissingHelper(t *testing.T) {
+	template, err := NewTemplate(`{{len(foo)}}`)
+	require.NoError(t, err)
+
+	data := map[string]any{"Items": []string{"foo"}}
+	b := new(bytes.Buffer)
+	err = template.Execute(b, data)
+
+	require.ErrorContains(t, err, "function 'len' not defined")
+}

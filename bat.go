@@ -196,6 +196,10 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 			args = append(args, reflect.ValueOf(t.access(arg, data, helpers, vars)))
 		}
 
+		if !toCall.IsValid() {
+			t.panicWithTrace(n.Children[0], fmt.Sprintf("function '%s' not defined", n.Children[0].Value))
+		}
+
 		// Wrap the call in a closure to allow for the possibility of panics so
 		// we can provide good error messages
 		return func() any {
