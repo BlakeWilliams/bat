@@ -260,9 +260,7 @@ The following operations are supported:
 - `/` Division
 - `%` Modulus
 
-More comprehensive casting logic would be welcome in the form of a PR to work
-around some potential bugs and edge cases due to the naive casting
-implementation.
+More comprehensive casting logic would be welcome in the form of a PR.
 
 ## TODO
 
