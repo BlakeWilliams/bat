@@ -33,11 +33,11 @@ func NewEngine(escapeFunc func(text string) string) *Engine {
 		"safe": func(s string) Safe {
 			return Safe(s)
 		},
-		"partial": func(name string, data map[string]any) string {
+		"partial": func(name string, data map[string]any) Safe {
 			out := new(bytes.Buffer)
 			engine.Render(out, name, data)
 
-			return out.String()
+			return Safe(out.String())
 		},
 	}
 
