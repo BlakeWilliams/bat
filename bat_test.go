@@ -734,3 +734,13 @@ func TestTemplate_MissingHelper(t *testing.T) {
 
 	require.ErrorContains(t, err, "function 'len' not defined")
 }
+
+func TestTemplate_MissingMapValue(t *testing.T) {
+	template, err := NewTemplate(`{{ { Errors: Errors } }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{})
+
+	require.NoError(t, err)
+}

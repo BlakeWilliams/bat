@@ -302,7 +302,13 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 			key := child.Children[0]
 			value := child.Children[1]
 
-			m[key.Value] = reflect.ValueOf(t.access(value, data, helpers, vars)).Interface()
+			// This can be invalid, so we need to check it
+			rVal := reflect.ValueOf(t.access(value, data, helpers, vars))
+			if rVal.IsValid() {
+				m[key.Value] = rVal.Interface()
+			} else {
+				m[key.Value] = nil
+			}
 		}
 
 		return m
