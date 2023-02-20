@@ -86,8 +86,13 @@ func TestLessThan(t *testing.T) {
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			require.True(t, lessThan(tc.left, tc.right))
-			require.False(t, lessThan(tc.right, tc.left))
+			val, err := lessThan(tc.left, tc.right)
+			require.NoError(t, err)
+			require.True(t, val)
+
+			val, err = lessThan(tc.right, tc.left)
+			require.NoError(t, err)
+			require.False(t, val)
 		})
 	}
 }

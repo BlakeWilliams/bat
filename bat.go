@@ -271,13 +271,30 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 		case "%":
 			return modulo(left, right)
 		case "<":
-			return lessThan(left, right)
+			val, err := lessThan(left, right)
+			if err != nil {
+				t.panicWithTrace(n, err.Error())
+			}
+			return val
 		case ">":
-			return greaterThan(left, right)
+			val, err := greaterThan(left, right)
+			if err != nil {
+				t.panicWithTrace(n, err.Error())
+			}
+			return val
 		case "<=":
-			return lessThan(left, right) || compare(reflect.ValueOf(left), reflect.ValueOf(right))
+			val, err := lessThan(left, right)
+			if err != nil {
+				t.panicWithTrace(n, err.Error())
+			}
+			return val || compare(reflect.ValueOf(left), reflect.ValueOf(right))
 		case ">=":
-			return greaterThan(left, right) || compare(reflect.ValueOf(left), reflect.ValueOf(right))
+			val, err := greaterThan(left, right)
+			if err != nil {
+				t.panicWithTrace(n, err.Error())
+			}
+
+			return val || compare(reflect.ValueOf(left), reflect.ValueOf(right))
 		default:
 			t.panicWithTrace(n, fmt.Sprintf("Unsupported operator '%s'", n.Children[1].Value))
 			return nil
