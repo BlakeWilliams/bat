@@ -169,8 +169,10 @@ func parseMany(p *parser) []*Node {
 			node := &Node{Kind: KindText, Value: token.Value, StartLine: token.StartLine, EndLine: token.EndLine}
 			nodes = append(nodes, node)
 		case lexer.KindLeftDelim:
-			p.skipWhitespace()
 			token := p.next()
+
+			p.skipWhitespace()
+
 			// else and end signify the end of the current statement, so exit
 			switch p.peek().Kind {
 			case lexer.KindElse:

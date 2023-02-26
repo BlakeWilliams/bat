@@ -82,6 +82,23 @@ func TestTemplateDotsNil(t *testing.T) {
 	require.ErrorContains(t, err, "on line 1")
 }
 
+func TestTemplate_If_Spacing(t *testing.T) {
+	template, err := NewTemplate("{{ if name != nil }}Hello!{{ else }}Goodbye!{{ end }}")
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello!", b.String())
+
+	b = new(bytes.Buffer)
+	err = template.Execute(b, map[string]any{})
+	require.NoError(t, err)
+
+	require.Equal(t, "Goodbye!", b.String())
+}
+
 func TestTemplate_If(t *testing.T) {
 	template, err := NewTemplate("{{if name != nil}}Hello!{{else}}Goodbye!{{end}}")
 	require.NoError(t, err)
