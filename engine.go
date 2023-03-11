@@ -91,12 +91,49 @@ func (e *Engine) RegisterFile(name string, input string) error {
 }
 
 // Renders the template with the given name and data to the provider writer.
-func (e *Engine) Render(b io.Writer, name string, data map[string]any) error {
-	if template, ok := e.templates[name]; ok {
-		return template.Execute(b, data)
+func (e *Engine) Render(w io.Writer, name string, data map[string]any) error {
+	var layoutName string
+	helpers := map[string]any{
+		"layout": func(name string) {
+			if layoutName != "" {
+				panic("layout already set")
+			}
+
+			layoutName = name
+		},
 	}
 
-	return fmt.Errorf("template %s not found", name)
+	template, ok := e.templates[name]
+	if !ok {
+		return fmt.Errorf("template %s not found", name)
+	}
+
+	var b bytes.Buffer
+	err := template.Execute(&b, helpers, data)
+	if err != nil {
+		return err
+	}
+
+	if layoutName == "" {
+		w.Write(b.Bytes())
+		return err
+	}
+
+	templateData := make(map[string]any, len(data)+1)
+	for k, v := range data {
+		templateData[k] = v
+	}
+	templateData["ChildContent"] = Safe(b.String())
+
+	var tb bytes.Buffer
+	err = e.Render(&tb, layoutName, templateData)
+	if err != nil {
+		return err
+	}
+
+	w.Write(tb.Bytes())
+
+	return nil
 }
 
 // AutoRegister recursivly finds all files with the given extension and

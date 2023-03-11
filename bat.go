@@ -58,7 +58,7 @@ func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
 
 // Executes the template, streaming output to out. The data parameter is made
 // available to the template.
-func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
+func (t *Template) Execute(out io.Writer, extraHelpers map[string]any, data map[string]any) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch val := r.(type) {
@@ -70,8 +70,18 @@ func (t *Template) Execute(out io.Writer, data map[string]any) (err error) {
 		}
 	}()
 
+	helpers := make(map[string]any, len(t.helpers)+len(extraHelpers))
+	for k, v := range t.helpers {
+		helpers[k] = v
+	}
+
+	for k, v := range extraHelpers {
+		helpers[k] = v
+	}
+
+	// TODO validate no overlaps, log or raise?
 	for _, child := range t.ast.Children {
-		t.eval(child, out, data, t.helpers, make(map[string]any))
+		t.eval(child, out, data, helpers, make(map[string]any))
 	}
 
 	return nil
@@ -209,7 +219,12 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 				}
 			}()
 
-			return toCall.Call(args)[0].Interface()
+			if toCall.Type().NumOut() == 0 {
+				toCall.Call(args)
+				return nil
+			} else {
+				return toCall.Call(args)[0].Interface()
+			}
 		}()
 	case parser.KindNegate:
 		value := t.access(n.Children[0], data, helpers, vars)
