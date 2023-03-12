@@ -54,6 +54,8 @@ engine.Render("templates/users/signup.html", map[string]any{"Team": team})
   return the length of the `Users` slice.
 - `partial` - renders a partial template. For example, `{{partial("header", {foo: "bar"})}}`
   will render the `header` template with the provided map as locals.
+- `layout` - Wraps the current template with the provided layout. For example,
+  `{{ layout("layouts/application") }}` will render the current template wrapped with template registered as "layouts/application". All data available to the current template will be available to the layout.
 
 Here's an overview of more advanced usage:
 
@@ -281,6 +283,7 @@ More comprehensive casting logic would be welcome in the form of a PR.
 - [x] Support method calls
 - [x] Support helpers
 - [x] Support map/slice array access `[]`
+- [ ] Validate helper methods have 0 or 1 return values
 
 ## Maybe
 

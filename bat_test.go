@@ -15,7 +15,7 @@ func TestTemplate(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	err = template.Execute(b, nil, map[string]any{"name": "Fox Mulder"})
 	require.NoError(t, err)
 
 	require.Equal(t, "<h1>Hello Fox Mulder</h1>", b.String())
@@ -47,7 +47,7 @@ func TestTemplateDots(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"user": user})
+	err = template.Execute(b, nil, map[string]any{"user": user})
 	require.NoError(t, err)
 
 	require.Equal(t, "<h1>Hello Fox Mulder</h1>", b.String())
@@ -65,7 +65,7 @@ func TestTemplateDots_Map(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"details": user})
+	err = template.Execute(b, nil, map[string]any{"details": user})
 	require.NoError(t, err)
 
 	require.Equal(t, "<h1>Hello Fox Mulder</h1>", b.String())
@@ -76,7 +76,7 @@ func TestTemplateDotsNil(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.Error(t, err)
 	require.ErrorContains(t, err, "attempted to access property `user` on nil value")
 	require.ErrorContains(t, err, "on line 1")
@@ -87,13 +87,13 @@ func TestTemplate_If_Spacing(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	err = template.Execute(b, nil, map[string]any{"name": "Fox Mulder"})
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello!", b.String())
 
 	b = new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	require.Equal(t, "Goodbye!", b.String())
@@ -104,13 +104,13 @@ func TestTemplate_If(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	err = template.Execute(b, nil, map[string]any{"name": "Fox Mulder"})
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello!", b.String())
 
 	b = new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	require.Equal(t, "Goodbye!", b.String())
@@ -121,7 +121,7 @@ func TestTemplate_IfTrue(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello!", b.String())
@@ -132,7 +132,7 @@ func TestTemplate_IfTruthy(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"name": "Fox Mulder"})
+	err = template.Execute(b, nil, map[string]any{"name": "Fox Mulder"})
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello!", b.String())
@@ -143,7 +143,7 @@ func TestTemplate_IfFalse(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	require.Equal(t, "Hello!", b.String())
@@ -154,7 +154,7 @@ func TestTemplate_IfFalsNoElse(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	require.Equal(t, "", b.String())
@@ -170,7 +170,7 @@ func TestTemplateRange(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": []string{"Fox Mulder", "Dana Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -193,7 +193,7 @@ func TestTemplateRange_SingleVariable(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": []string{"Fox Mulder", "Dana Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -216,7 +216,7 @@ func TestTemplateRange_Map(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -243,7 +243,7 @@ func TestTemplateRange_NestedStringConditional(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -266,7 +266,7 @@ func TestTemplateRange_Numbers(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `hello 1000!`
@@ -279,7 +279,7 @@ func TestTemplate_NegativeLiteral(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `hello 1000!`
@@ -292,7 +292,7 @@ func TestTemplate_NegativeVariable(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": []string{"Fox Mulder", "Dana Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `0!-1!`
@@ -305,7 +305,7 @@ func TestTemplate_NegativeVariableNonInt(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.Error(t, err)
 	// TODO validate line information is provided
 }
@@ -316,7 +316,7 @@ func TestTemplate_Subtraction(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "95"
@@ -329,7 +329,7 @@ func TestTemplate_Addition(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "105"
@@ -342,7 +342,7 @@ func TestTemplate_Multiplication(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "500"
@@ -355,7 +355,7 @@ func TestTemplate_Division(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "20"
@@ -368,7 +368,7 @@ func TestTemplate_Modulo(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "0"
@@ -381,7 +381,7 @@ func TestTemplate_Escape(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"userInput": "<h1>Hello!</h1>"}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "&lt;h1&gt;Hello!&lt;/h1&gt;"
@@ -394,7 +394,7 @@ func TestTemplate_EscapeSafe(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"userInput": Safe("<h1>Hello!</h1>")}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "<h1>Hello!</h1>"
@@ -413,7 +413,7 @@ func TestTemplate_Stringer(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"userInput": &stringerStruct{value: "foo"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "foo"
@@ -427,7 +427,7 @@ func TestTemplate_Call(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"userInput": &stringerStruct{value: "foo"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "omg"
@@ -441,7 +441,7 @@ func TestTemplate_CallArgs(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "you are number 1"
@@ -454,7 +454,7 @@ func TestTemplate_CallChain(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"user": user{Name: name{First: "Fox", Last: "Mulder"}}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "FM"
@@ -467,7 +467,7 @@ func TestTemplate_CallNestedChain(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"user": user{Name: name{First: "Fox", Last: "Mulder"}}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "FM"
@@ -480,7 +480,7 @@ func TestTemplate_Hash(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "map[bar:2 foo:1]"
@@ -496,7 +496,7 @@ func TestTemplate_CallHash(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "2"
@@ -509,7 +509,7 @@ func TestTemplate_BracketAccess(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := "1"
@@ -521,7 +521,7 @@ func TestTemplate_Nil(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 	require.NoError(t, err)
 
 	expected := ""
@@ -533,7 +533,7 @@ func TestTemplate_NotFalsy(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"value": false})
+	err = template.Execute(b, nil, map[string]any{"value": false})
 	require.NoError(t, err)
 
 	expected := "true"
@@ -545,7 +545,7 @@ func TestTemplate_NotTruthy(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"value": true})
+	err = template.Execute(b, nil, map[string]any{"value": true})
 	require.NoError(t, err)
 
 	expected := "false"
@@ -557,7 +557,7 @@ func TestTemplate_HelperCallError(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"value": true})
+	err = template.Execute(b, nil, map[string]any{"value": true})
 	require.Error(t, err)
 	require.ErrorContains(t, err, "error calling function 'foo'")
 	require.ErrorContains(t, err, "too few input arguments")
@@ -569,7 +569,7 @@ func TestTemplate_IfHelper(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{"foo": []string{}})
+	err = template.Execute(b, nil, map[string]any{"foo": []string{}})
 	require.NoError(t, err)
 
 	require.Equal(t, "bar", b.String())
@@ -589,7 +589,7 @@ func TestTemplateRange_Channel(t *testing.T) {
 	data := map[string]any{"people": ch}
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -613,7 +613,7 @@ func TestTemplateRange_Array(t *testing.T) {
 	data := map[string]any{"people": [2]string{"Fox Mulder", "Dana Scully"}}
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `
@@ -632,7 +632,7 @@ func TestTemplate_IfWithSubtraction(t *testing.T) {
 	require.NoError(t, err)
 	data := map[string]any{"people": map[string]string{"Fox": "Mulder", "Dana": "Scully"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `hello 999!`
@@ -645,7 +645,7 @@ func TestTemplate_ArrayAccessInt64(t *testing.T) {
 
 	data := map[string]any{"foo": []string{"bar"}, "i": int64(0)}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `bar`
@@ -666,7 +666,7 @@ func TestTemplate_ValueMethods(t *testing.T) {
 
 	data := map[string]any{"value": &callableType{body: "hello"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `HELLO`
@@ -679,7 +679,7 @@ func TestTemplate_VarGreaterThan(t *testing.T) {
 
 	data := map[string]any{"Page": 2}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `foo`
@@ -692,7 +692,7 @@ func TestTemplate_VarLessThan(t *testing.T) {
 
 	data := map[string]any{"Page": 0}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `foo`
@@ -705,7 +705,7 @@ func TestTemplate_VarGreaterThanEqual(t *testing.T) {
 
 	data := map[string]any{"Page": 1}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `foo`
@@ -718,7 +718,7 @@ func TestTemplate_VarLessThanEqual(t *testing.T) {
 
 	data := map[string]any{"Page": 1}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `foo`
@@ -734,7 +734,7 @@ func TestTemplate_MathOrder(t *testing.T) {
 
 	data := map[string]any{"Items": []string{"foo"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 	require.NoError(t, err)
 
 	expected := `foo`
@@ -747,7 +747,7 @@ func TestTemplate_MissingHelper(t *testing.T) {
 
 	data := map[string]any{"Items": []string{"foo"}}
 	b := new(bytes.Buffer)
-	err = template.Execute(b, data)
+	err = template.Execute(b, nil, data)
 
 	require.ErrorContains(t, err, "function 'len' not defined")
 }
@@ -757,7 +757,7 @@ func TestTemplate_MissingMapValue(t *testing.T) {
 	require.NoError(t, err)
 
 	b := new(bytes.Buffer)
-	err = template.Execute(b, map[string]any{})
+	err = template.Execute(b, nil, map[string]any{})
 
 	require.NoError(t, err)
 }

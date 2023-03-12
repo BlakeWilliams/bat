@@ -112,3 +112,71 @@ func TestEngine_Errors(t *testing.T) {
 	require.ErrorContains(t, err, "starting on line 1")
 	require.ErrorContains(t, err, "{{name[0]}}")
 }
+
+func TestEngine_Render_Layout(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("layout", `<h1>HELLO {{ ChildContent }}!</h1>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ name }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "<h1>HELLO Fox Mulder!</h1>", b.String())
+}
+
+func TestEngine_Render_Nested_Layout(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("root", "<html>{{ ChildContent }}</html>")
+	require.NoError(t, err)
+	err = engine.Register("layout", `{{ layout("root") }}<h1>HELLO {{ ChildContent }}!</h1>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ name }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "<html><h1>HELLO Fox Mulder!</h1></html>", b.String())
+}
+
+func TestEngine_Render_Layout_MultipleCalls(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("layout", `<h1>HELLO {{ ChildContent }}!</h1>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ layout("layout") }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
+	require.ErrorContains(t, err, "layout already set")
+}
+
+func TestEngine_Render_Layout_Missing(t *testing.T) {
+	engine := NewEngine(NoEscape)
+	err := engine.Register("hello", `{{ layout("layout") }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
+	require.Error(t, err)
+}
+
+func TestEngine_Render_Layout_InheritsData(t *testing.T) {
+	engine := NewEngine(NoEscape)
+	err := engine.Register("layout", `<{{ Tag }}>HELLO {{ ChildContent }}!</{{ Tag }}>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ name }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder", "Tag": "h2"})
+	require.NoError(t, err)
+	require.Equal(t, "<h2>HELLO Fox Mulder!</h2>", b.String())
+}

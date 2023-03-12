@@ -19,16 +19,16 @@ func BenchmarkHelloWorld(b *testing.B) {
 	args := map[string]any{"name": "world"}
 
 	batOutput := new(bytes.Buffer)
-	batTemplate.Execute(batOutput, args)
+	batTemplate.Execute(batOutput, nil, args)
 
 	htmlOutput := new(bytes.Buffer)
-	batTemplate.Execute(htmlOutput, args)
+	batTemplate.Execute(htmlOutput, nil, args)
 
 	require.Equal(b, batOutput.String(), htmlOutput.String())
 
 	b.Run("bat", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			batTemplate.Execute(io.Discard, args)
+			batTemplate.Execute(io.Discard, nil, args)
 		}
 	})
 
@@ -50,16 +50,16 @@ func BenchmarkRangeIf(b *testing.B) {
 	args := map[string]any{"Names": []string{"Fox", "Dana", "Smoking Man"}}
 
 	batOutput := new(bytes.Buffer)
-	batTemplate.Execute(batOutput, args)
+	batTemplate.Execute(batOutput, nil, args)
 
 	htmlOutput := new(bytes.Buffer)
-	batTemplate.Execute(htmlOutput, args)
+	batTemplate.Execute(htmlOutput, nil, args)
 
 	require.Equal(b, batOutput.String(), htmlOutput.String())
 
 	b.Run("bat", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			batTemplate.Execute(io.Discard, args)
+			batTemplate.Execute(io.Discard, nil, args)
 		}
 	})
 
