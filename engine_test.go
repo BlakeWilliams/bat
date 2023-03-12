@@ -167,3 +167,16 @@ func TestEngine_Render_Layout_Missing(t *testing.T) {
 	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder"})
 	require.Error(t, err)
 }
+
+func TestEngine_Render_Layout_InheritsData(t *testing.T) {
+	engine := NewEngine(NoEscape)
+	err := engine.Register("layout", `<{{ Tag }}>HELLO {{ ChildContent }}!</{{ Tag }}>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ name }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"name": "Fox Mulder", "Tag": "h2"})
+	require.NoError(t, err)
+	require.Equal(t, "<h2>HELLO Fox Mulder!</h2>", b.String())
+}
