@@ -353,7 +353,12 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 
 		switch rootVal.Kind() {
 		case reflect.Map:
-			return rootVal.MapIndex(reflect.ValueOf(accessor)).Interface()
+			value := rootVal.MapIndex(reflect.ValueOf(accessor))
+			if !value.IsValid() {
+				return nil
+			}
+
+			return value.Interface()
 		case reflect.Slice, reflect.Array:
 			switch accessorVal.Kind() {
 			case reflect.Int:
