@@ -771,3 +771,13 @@ func TestTemplate_MissingMapAccessValue(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestTemplate_MapAccessInMap(t *testing.T) {
+	template, err := NewTemplate(`{{ { Errors: Errors["first"] } }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, nil, map[string]any{"Errors": map[string]string{"first": "foo"}})
+
+	require.NoError(t, err)
+}

@@ -623,7 +623,7 @@ func parseMap(p *parser) *Node {
 		key := p.expect(lexer.KindIdentifier)
 		p.expect(lexer.KindColon)
 		p.skipWhitespace()
-		value := parseLiteralOrAccess(p)
+		value := parseExpression(p, true)
 
 		pair := &Node{
 			Kind: KindPair,
