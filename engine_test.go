@@ -180,3 +180,42 @@ func TestEngine_Render_Layout_InheritsData(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "<h2>HELLO Fox Mulder!</h2>", b.String())
 }
+
+func TestEngine_Render_Nested_LocalHelper(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("root", "<html>{{ ChildContent }}</html>")
+	require.NoError(t, err)
+	err = engine.Register("layout", `{{ layout("root") }}<h1>HELLO {{ ChildContent }}!</h1>`)
+	require.NoError(t, err)
+	err = engine.Register("hello", `{{ layout("layout") }}{{ omg() }}`)
+	require.NoError(t, err)
+
+	helpers := map[string]any{
+		"omg": func() string { return "omg" },
+	}
+	b := new(bytes.Buffer)
+	err = engine.RenderWithHelpers(b, "hello", helpers, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "<html><h1>HELLO omg!</h1></html>", b.String())
+}
+
+func TestEngine_DefaultHelper_Partial_Helpers(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("hello", "{{name}}. {{ omg() }}")
+	require.NoError(t, err)
+	err = engine.Register("foo", `Hi {{partial("hello", {name: name})}}`)
+	require.NoError(t, err)
+
+	helpers := map[string]any{
+		"omg": func() string { return "omg" },
+	}
+
+	b := new(bytes.Buffer)
+	err = engine.RenderWithHelpers(b, "foo", helpers, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hi Fox Mulder. omg", b.String())
+}

@@ -33,16 +33,6 @@ func NewEngine(escapeFunc func(text string) string) *Engine {
 		"safe": func(s string) Safe {
 			return Safe(s)
 		},
-		"partial": func(name string, data map[string]any) Safe {
-			out := new(bytes.Buffer)
-			err := engine.Render(out, name, data)
-
-			if err != nil {
-				panic(err)
-			}
-
-			return Safe(out.String())
-		},
 	}
 
 	engine.helpers = defaultHelpers
@@ -92,15 +82,32 @@ func (e *Engine) RegisterFile(name string, input string) error {
 
 // Renders the template with the given name and data to the provider writer.
 func (e *Engine) Render(w io.Writer, name string, data map[string]any) error {
-	var layoutName string
-	helpers := map[string]any{
-		"layout": func(name string) {
-			if layoutName != "" {
-				panic("layout already set")
-			}
+	return e.RenderWithHelpers(w, name, nil, data)
+}
 
-			layoutName = name
-		},
+func (e *Engine) RenderWithHelpers(w io.Writer, name string, helpers map[string]any, data map[string]any) error {
+	var layoutName string
+	if helpers == nil {
+		helpers = make(map[string]any, 1)
+	}
+
+	helpers["layout"] = func(name string) {
+		if layoutName != "" {
+			panic("layout already set")
+		}
+
+		layoutName = name
+	}
+
+	helpers["partial"] = func(name string, data map[string]any) Safe {
+		out := new(bytes.Buffer)
+		err := e.RenderWithHelpers(out, name, helpers, data)
+
+		if err != nil {
+			panic(err)
+		}
+
+		return Safe(out.String())
 	}
 
 	template, ok := e.templates[name]
@@ -126,7 +133,7 @@ func (e *Engine) Render(w io.Writer, name string, data map[string]any) error {
 	templateData["ChildContent"] = Safe(b.String())
 
 	var tb bytes.Buffer
-	err = e.Render(&tb, layoutName, templateData)
+	err = e.RenderWithHelpers(&tb, layoutName, helpers, templateData)
 	if err != nil {
 		return err
 	}
