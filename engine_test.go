@@ -219,3 +219,33 @@ func TestEngine_DefaultHelper_Partial_Helpers(t *testing.T) {
 
 	require.Equal(t, "Hi Fox Mulder. omg", b.String())
 }
+
+func TestEngine_Comments(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("hello", "Hello {{ // name }}")
+	require.NoError(t, err)
+
+	helpers := map[string]any{}
+
+	b := new(bytes.Buffer)
+	err = engine.RenderWithHelpers(b, "hello", helpers, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello ", b.String())
+}
+
+func TestEngine_CommentAfterStatement(t *testing.T) {
+	engine := NewEngine(NoEscape)
+
+	err := engine.Register("hello", "Hello {{ name // Necessary }}")
+	require.NoError(t, err)
+
+	helpers := map[string]any{}
+
+	b := new(bytes.Buffer)
+	err = engine.RenderWithHelpers(b, "hello", helpers, map[string]any{"name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello Fox Mulder", b.String())
+}

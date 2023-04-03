@@ -179,6 +179,16 @@ func parseMany(p *parser) []*Node {
 				return nodes
 			case lexer.KindEnd:
 				return nodes
+			case lexer.KindSlash:
+				p.expect(lexer.KindSlash)
+
+				for {
+					token := p.next()
+					if token.Kind == lexer.KindRightDelim {
+						p.next()
+						return nodes
+					}
+				}
 			}
 
 			// parse everything between {{ and }}
@@ -186,6 +196,19 @@ func parseMany(p *parser) []*Node {
 			node.Children = []*Node{parseStatement(p)}
 			nodes = append(nodes, node)
 			p.skipWhitespace()
+
+			if p.peek().Kind == lexer.KindSlash {
+				p.expect(lexer.KindSlash)
+
+				for {
+					token := p.next()
+					if token.Kind == lexer.KindRightDelim {
+						p.next()
+						return nodes
+					}
+				}
+			}
+
 			p.expect(lexer.KindRightDelim)
 		case lexer.KindElse:
 			return nodes
@@ -348,7 +371,13 @@ func parseExpression(p *parser, allowOperator bool) *Node {
 		if !allowOperator {
 			return rootNode
 		}
-	case lexer.KindPlus, lexer.KindSlash, lexer.KindAsterisk, lexer.KindPercent, lexer.KindCloseAngle, lexer.KindOpenAngle:
+	case lexer.KindSlash:
+		// Support comments in expressions
+		// TODO extract into lexer?
+		if p.peekn(2).Kind == lexer.KindSlash {
+			return rootNode
+		}
+	case lexer.KindPlus, lexer.KindAsterisk, lexer.KindPercent, lexer.KindCloseAngle, lexer.KindOpenAngle:
 		// do nothing, fall through to parse operator
 	default:
 		return rootNode
