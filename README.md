@@ -264,6 +264,18 @@ The following operations are supported:
 
 More comprehensive casting logic would be welcome in the form of a PR.
 
+### Comments
+
+Comments are supported as complete statements or at the end of a statement.
+
+```html
+{{ // This is a comment }}
+```
+
+```html
+{{ foo // This is also a comment }}
+```
+
 ## TODO
 
 - [x] Add `each` functionality (see the section on `range`)
