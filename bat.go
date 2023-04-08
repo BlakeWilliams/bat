@@ -16,7 +16,7 @@ import (
 
 // Represents a single template that can be rendered.
 type Template struct {
-	Name       string
+	name       string
 	ast        *parser.Node
 	helpers    map[string]any
 	escapeFunc func(string) string
@@ -40,7 +40,7 @@ type TemplateOption = func(*Template)
 // Creates a new template using the provided input. Options can be provided to
 // customize the template, such as setting the function used to escape unsafe
 // input.
-func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
+func NewTemplate(name string, input string, opts ...TemplateOption) (Template, error) {
 	l := lexer.Lex(input)
 	ast, err := parser.Parse(l)
 
@@ -48,12 +48,17 @@ func NewTemplate(input string, opts ...TemplateOption) (Template, error) {
 		return Template{}, fmt.Errorf("could not create template: %w", err)
 	}
 
-	t := Template{raw: input, ast: ast, escapeFunc: HTMLEscape}
+	t := Template{name: name, raw: input, ast: ast, escapeFunc: HTMLEscape}
 	for _, opt := range opts {
 		opt(&t)
 	}
 
 	return t, nil
+}
+
+// Name returns the name of the template.
+func (t *Template) Name() string {
+	return t.name
 }
 
 // Executes the template, streaming output to out. The data parameter is made
@@ -444,7 +449,7 @@ func (t *Template) panicWithTrace(n *parser.Node, msg string) {
 	}
 	relevantLines := lines[n.StartLine-1 : endLine]
 
-	errorMessage := fmt.Sprintf("%s starting on line %d:\n%s", msg, n.StartLine, strings.Join(relevantLines, "\n"))
+	errorMessage := fmt.Sprintf("%s in `%s` starting on line %d:\n%s", msg, t.Name(), n.StartLine, strings.Join(relevantLines, "\n"))
 
 	panic(errorMessage)
 }

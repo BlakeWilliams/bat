@@ -55,7 +55,7 @@ func (e *Engine) Helper(name string, fn any) {
 // Registers a new template using the given name. Typically name's will be
 // relative file paths. e.g. users/new.batml
 func (e *Engine) Register(name string, input string) error {
-	t, err := NewTemplate(input, WithEscapeFunc(e.escapeFunc), WithHelpers(e.helpers))
+	t, err := NewTemplate(name, input, WithEscapeFunc(e.escapeFunc), WithHelpers(e.helpers))
 
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (e *Engine) Register(name string, input string) error {
 // Registers a new template using the given name. Typically name's will be
 // relative file paths. e.g. users/new.batml
 func (e *Engine) RegisterFile(name string, input string) error {
-	t, err := NewTemplate(input, WithEscapeFunc(e.escapeFunc), WithHelpers(e.helpers))
+	t, err := NewTemplate(name, input, WithEscapeFunc(e.escapeFunc), WithHelpers(e.helpers))
 
 	if err != nil {
 		return err
@@ -87,6 +87,7 @@ func (e *Engine) Render(w io.Writer, name string, data map[string]any) error {
 
 func (e *Engine) RenderWithHelpers(w io.Writer, name string, helpers map[string]any, data map[string]any) error {
 	var layoutName string
+	var layoutArgs map[string]any
 	if helpers == nil {
 		helpers = make(map[string]any, 1)
 	}
@@ -122,23 +123,27 @@ func (e *Engine) RenderWithHelpers(w io.Writer, name string, helpers map[string]
 	}
 
 	if layoutName == "" {
-		w.Write(b.Bytes())
+		_, _ = w.Write(b.Bytes())
 		return err
 	}
 
-	templateData := make(map[string]any, len(data)+1)
+	layoutData := make(map[string]any, len(data)+1)
 	for k, v := range data {
-		templateData[k] = v
+		layoutData[k] = v
 	}
-	templateData["ChildContent"] = Safe(b.String())
+	for k, v := range layoutArgs {
+		layoutData[k] = v
+	}
+
+	layoutData["ChildContent"] = Safe(b.String())
 
 	var tb bytes.Buffer
-	err = e.RenderWithHelpers(&tb, layoutName, helpers, templateData)
+	err = e.RenderWithHelpers(&tb, layoutName, helpers, layoutData)
 	if err != nil {
 		return err
 	}
 
-	w.Write(tb.Bytes())
+	_, _ = w.Write(tb.Bytes())
 
 	return nil
 }
