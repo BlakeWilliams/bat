@@ -358,6 +358,14 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 
 		switch rootVal.Kind() {
 		case reflect.Map:
+			// TODO handle dynamic casting of types here, like int -> int64
+			if rootVal.Type().Key() != reflect.TypeOf(accessor) {
+				t.panicWithTrace(
+					n,
+					fmt.Sprintf("cannot access map of type %s with access of value %s", rootVal.Type(), reflect.TypeOf(accessor)),
+				)
+			}
+
 			value := rootVal.MapIndex(reflect.ValueOf(accessor))
 			if !value.IsValid() {
 				return nil

@@ -781,3 +781,37 @@ func TestTemplate_MapAccessInMap(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestTemplate_MapAccessInMap_IntInt64(t *testing.T) {
+	template, err := NewTemplate("hello.html", `{{ { Errors: Errors[ID] } }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(
+		b,
+		nil,
+		map[string]any{
+			"Errors": map[int64]string{1: "foo"},
+			"ID":     int(1),
+		},
+	)
+
+	require.NoError(t, err)
+}
+
+func TestTemplate_MapAccessInMap_WrongTypes(t *testing.T) {
+	template, err := NewTemplate("hello.html", `{{ { Errors: Errors[ID] } }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(
+		b,
+		nil,
+		map[string]any{
+			"Errors": map[string]string{"1": "foo"},
+			"ID":     int(1),
+		},
+	)
+
+	require.NoError(t, err)
+}
