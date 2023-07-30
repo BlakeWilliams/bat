@@ -358,15 +358,25 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 
 		switch rootVal.Kind() {
 		case reflect.Map:
+			var accessorValue reflect.Value
+			targetType := rootVal.Type().Key()
+			givenType := reflect.TypeOf(accessor)
+
 			// TODO handle dynamic casting of types here, like int -> int64
-			if rootVal.Type().Key() != reflect.TypeOf(accessor) {
-				t.panicWithTrace(
-					n,
-					fmt.Sprintf("cannot access map of type %s with access of value %s", rootVal.Type(), reflect.TypeOf(accessor)),
-				)
+			if targetType != givenType {
+				if targetType.Kind() == reflect.Int64 && givenType.Kind() == reflect.Int {
+					accessorValue = castInt64(reflect.ValueOf(accessor))
+				} else {
+					t.panicWithTrace(
+						n,
+						fmt.Sprintf("cannot access map of type %s with access of type %s", rootVal.Type(), reflect.TypeOf(accessor)),
+					)
+				}
+			} else {
+				accessorValue = reflect.ValueOf(accessor)
 			}
 
-			value := rootVal.MapIndex(reflect.ValueOf(accessor))
+			value := rootVal.MapIndex(accessorValue)
 			if !value.IsValid() {
 				return nil
 			}

@@ -813,5 +813,5 @@ func TestTemplate_MapAccessInMap_WrongTypes(t *testing.T) {
 		},
 	)
 
-	require.NoError(t, err)
+	require.ErrorContains(t, err, "cannot access map of type map[string]string with access of type int")
 }
