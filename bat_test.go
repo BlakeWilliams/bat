@@ -815,3 +815,35 @@ func TestTemplate_MapAccessInMap_WrongTypes(t *testing.T) {
 
 	require.ErrorContains(t, err, "cannot access map of type map[string]string with access of type int")
 }
+
+func TestTemplate_StringConcat(t *testing.T) {
+	template, err := NewTemplate("hello.html", `{{ "Hello, " + Name }}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(b, nil, map[string]any{"Name": "Fox Mulder"})
+	require.NoError(t, err)
+
+	require.Equal(t, "Hello, Fox Mulder", b.String())
+
+}
+
+func TestTemplate_StringConcat_SafeUnsafe(t *testing.T) {
+	template, err := NewTemplate("hello.html", `{{ Greeting + Name + "<script>" + Ending}}`)
+	require.NoError(t, err)
+
+	b := new(bytes.Buffer)
+	err = template.Execute(
+		b,
+		nil,
+		map[string]any{
+			"Greeting": Safe("<a href=\"#\">"),
+			"Name":     "Fox Mulder",
+			"Ending":   Safe("</a>"),
+		},
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, `<a href="#">Fox Mulder&lt;script&gt;</a>`, b.String())
+
+}

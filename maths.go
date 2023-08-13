@@ -52,12 +52,27 @@ func subtract(a any, b any) any {
 	}
 }
 
-func add(a any, b any) any {
+func add(a any, b any, escapeFunc func(string) string) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))
+	}
+
+	if aValue.Kind() == reflect.String {
+		left := aValue.String()
+		right := bValue.String()
+
+		if aValue.Type().Name() != "Safe" {
+			left = escapeFunc(left)
+		}
+
+		if bValue.Type().Name() != "Safe" {
+			right = escapeFunc(right)
+		}
+
+		return Safe(left + right)
 	}
 
 	switch reflect.ValueOf(b).Kind() {
@@ -90,7 +105,7 @@ func add(a any, b any) any {
 	case reflect.Complex128:
 		return a.(complex128) + b.(complex128)
 	default:
-		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+		panic(fmt.Sprintf("can't add %s from %s", aValue.Kind(), bValue.Kind()))
 	}
 }
 

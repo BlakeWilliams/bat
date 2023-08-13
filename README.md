@@ -309,4 +309,4 @@ Comments are supported as complete statements or at the end of a statement.
 
 - Add parens for complex options
 - Variable declarations that look like provided data access (use $ for template locals, plain identifiers for everything else)
-- Add string concatenation
+- ~Add string concatenation~

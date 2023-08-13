@@ -283,7 +283,7 @@ func (t *Template) access(n *parser.Node, data map[string]any, helpers map[strin
 		case "-":
 			return subtract(left, right)
 		case "+":
-			return add(left, right)
+			return add(left, right, t.escapeFunc)
 		case "*":
 			return multiply(left, right)
 		case "/":
