@@ -14,6 +14,10 @@ func subtract(a any, b any) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 
+	if !aValue.IsValid() || !bValue.IsValid() {
+		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+	}
+
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))
 	}
@@ -55,6 +59,10 @@ func subtract(a any, b any) any {
 func add(a any, b any, escapeFunc func(string) string) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
+
+	if !aValue.IsValid() || !bValue.IsValid() {
+		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+	}
 
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))
@@ -113,6 +121,10 @@ func multiply(a any, b any) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 
+	if !aValue.IsValid() || !bValue.IsValid() {
+		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+	}
+
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))
 	}
@@ -155,6 +167,10 @@ func divide(a any, b any) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 
+	if !aValue.IsValid() || !bValue.IsValid() {
+		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+	}
+
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))
 	}
@@ -196,6 +212,10 @@ func divide(a any, b any) any {
 func modulo(a any, b any) any {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
+
+	if !aValue.IsValid() || !bValue.IsValid() {
+		panic(fmt.Sprintf("can't subtract %s from %s", aValue.Kind(), bValue.Kind()))
+	}
 
 	if !aValue.CanConvert(bValue.Type()) {
 		panic(fmt.Sprintf("can't convert type %s into %s", aValue.Type(), bValue.Type()))

@@ -847,3 +847,12 @@ func TestTemplate_StringConcat_SafeUnsafe(t *testing.T) {
 	require.Equal(t, `<a href="#">Fox Mulder&lt;script&gt;</a>`, b.String())
 
 }
+
+func TestEngine_Error_Invalid_Maths(t *testing.T) {
+	engine := NewEngine(NoEscape)
+	err := engine.Register("hello", "{{Age - 1}}")
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", nil)
+
+	require.Errorf(t, err, "can't subtract invalid from int")
+}
