@@ -11,6 +11,9 @@ func compare(left reflect.Value, right reflect.Value) bool {
 	}
 
 	if left.IsValid() && right.IsValid() {
+		if left.Type() != right.Type() && right.Type().ConvertibleTo(left.Type()) {
+			return left.Interface() == right.Convert(left.Type()).Interface()
+		}
 		return left.Interface() == right.Interface()
 	}
 

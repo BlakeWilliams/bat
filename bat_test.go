@@ -856,3 +856,14 @@ func TestEngine_Error_Invalid_Maths(t *testing.T) {
 
 	require.Errorf(t, err, "can't subtract invalid from int")
 }
+
+func TestInt64_Equal(t *testing.T) {
+	engine := NewEngine(NoEscape)
+	err := engine.Register("hello", "{{ID == 1}}")
+	b := new(bytes.Buffer)
+	err = engine.Render(b, "hello", map[string]any{"ID": int64(1)})
+
+	require.NoError(t, err)
+
+	require.Equal(t, `true`, b.String())
+}
